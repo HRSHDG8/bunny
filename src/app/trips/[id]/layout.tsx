@@ -1,11 +1,17 @@
 import { format } from "date-fns";
 import { CalendarDays, MapPin } from "lucide-react";
-import { getCurrentUser, getTrip, tripDays } from "@/lib/data";
+import {
+  getCurrentUser,
+  getTrip,
+  getTripMembership,
+  tripDays,
+} from "@/lib/data";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { TripTabs } from "@/components/trips/trip-tabs";
 import { DeleteTripButton } from "@/components/trips/delete-trip-button";
 import { EditTripDialog } from "@/components/trips/edit-trip-dialog";
+import { InviteDialog } from "@/components/trips/invite-dialog";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +25,12 @@ export default async function TripLayout({
 
   const trip = await getTrip(id).catch(() => null);
   if (!trip) notFound();
+
+  const isOwner = trip.user_id === user.id;
+  const membership = isOwner
+    ? null
+    : await getTripMembership(id).catch(() => null);
+  const canManage = isOwner || membership?.role === "editor";
 
   const start = new Date(`${trip.start_date}T00:00:00`);
   const end = new Date(`${trip.end_date}T00:00:00`);
@@ -58,8 +70,13 @@ export default async function TripLayout({
             </div>
 
             <div className="flex items-center gap-1.5 rounded-2xl border border-cream/15 bg-cream/5 p-1.5">
-              <EditTripDialog trip={trip} />
-              <DeleteTripButton tripId={trip.id} tripName={trip.title} />
+              {canManage ? <EditTripDialog trip={trip} /> : null}
+              {isOwner ? (
+                <>
+                  <InviteDialog trip={trip} />
+                  <DeleteTripButton tripId={trip.id} tripName={trip.title} />
+                </>
+              ) : null}
             </div>
           </div>
         </div>

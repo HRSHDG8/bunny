@@ -9,8 +9,24 @@ export interface Trip {
   end_date: string;
   arrival_method: ArrivalMethod | null;
   arrival_notes: string | null;
+  share_token: string | null;
+  share_emails: string[];
   created_at: string;
   updated_at: string;
+}
+
+export interface TripMember {
+  trip_id: string;
+  user_id: string;
+  role: "editor" | "viewer";
+  joined_at: string;
+}
+
+export interface TripPreview {
+  title: string;
+  destination: string;
+  start_date: string;
+  end_date: string;
 }
 
 export interface Flight {

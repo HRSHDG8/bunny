@@ -1,6 +1,13 @@
 import { eachDayOfInterval, format } from "date-fns";
 import { createClient, requireUser } from "@/lib/supabase/server";
-import type { Flight, ItineraryItem, Rental, Trip } from "@/lib/types";
+import type {
+  Flight,
+  ItineraryItem,
+  Rental,
+  Trip,
+  TripMember,
+  TripPreview,
+} from "@/lib/types";
 
 export class NotFoundError extends Error {}
 
@@ -23,14 +30,41 @@ export async function getTrip(id: string): Promise<Trip> {
   const currentUser = await getCurrentUser();
   if (!currentUser) throw new NotFoundError("Not authorized");
 
+  // Row-level security limits this to the owner and invited members.
   const { data, error } = await supabase
     .from("trips")
     .select("*")
     .eq("id", id)
-    .eq("user_id", currentUser.id)
     .single();
   if (error || !data) throw new NotFoundError("Trip not found");
   return data;
+}
+
+export async function getTripMembership(
+  tripId: string,
+): Promise<TripMember | null> {
+  const supabase = await createClient();
+  const currentUser = await getCurrentUser();
+  if (!currentUser) return null;
+
+  const { data, error } = await supabase
+    .from("trip_members")
+    .select("*")
+    .eq("trip_id", tripId)
+    .eq("user_id", currentUser.id)
+    .maybeSingle();
+  if (error || !data) return null;
+  return data;
+}
+
+export async function getTripPreview(token: string): Promise<TripPreview> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("trip_for_invite", {
+    p_token: token,
+  });
+  if (error || !data || data.length === 0)
+    throw new NotFoundError("Invite not found");
+  return data[0];
 }
 
 export async function getFlights(tripId: string): Promise<Flight[]> {
