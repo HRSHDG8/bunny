@@ -19,7 +19,7 @@ export function RentalCard({
 }) {
   return (
     <article className="ticket overflow-visible rounded-2xl">
-      <div className="flex min-h-[150px]">
+      <div className="flex min-h-[150px] flex-col sm:flex-row">
         <div className="flex-1 p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -67,7 +67,7 @@ export function RentalCard({
         </div>
 
         {/* Stub */}
-        <div className="ticket-seam flex w-40 shrink-0 flex-col justify-center gap-4 bg-cream/40 p-4 pl-5">
+        <div className="ticket-seam ticket-seam-stack flex w-full shrink-0 flex-col justify-center gap-4 bg-cream/40 p-4 pl-5 sm:w-40">
           <div>
             <p className="micro text-muted">Booking</p>
             <p className="mt-1 font-mono text-base font-bold tracking-wider text-ink">

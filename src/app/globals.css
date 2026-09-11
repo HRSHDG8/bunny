@@ -144,6 +144,43 @@
     bottom: -14px;
   }
 
+  /* Vertical seam becomes horizontal when tickets stack on phones */
+  .ticket-seam-stack {
+    border-left-width: 0;
+    border-top: 2px dashed var(--color-line-strong);
+  }
+  .ticket-seam-stack::before,
+  .ticket-seam-stack::after {
+    top: -14px;
+    left: auto;
+    width: 26px;
+    height: 26px;
+  }
+  .ticket-seam-stack::before {
+    left: -14px;
+  }
+  .ticket-seam-stack::after {
+    right: -14px;
+  }
+  @media (min-width: 640px) {
+    .ticket-seam-stack {
+      border-top-width: 0;
+      border-left-width: 2px;
+    }
+    .ticket-seam-stack::before,
+    .ticket-seam-stack::after {
+      top: auto;
+      left: -14px;
+      right: auto;
+    }
+    .ticket-seam-stack::before {
+      top: -14px;
+    }
+    .ticket-seam-stack::after {
+      bottom: -14px;
+    }
+  }
+
   /* Dashed route line used by the itinerary timeline */
   .route-line {
     position: relative;

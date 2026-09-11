@@ -111,8 +111,8 @@ export function InviteDialog({ trip }: { trip: Trip }) {
                   placeholder="you@example.com, alex@example.com"
                   disabled={pending}
                 />
-                <div className="mt-2 flex items-center justify-between gap-3">
-                  <p className="text-[13px] text-muted">
+                <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-[13px] text-muted sm:flex-1">
                     Leave empty to let anyone with the link join.
                   </p>
                   <Button
@@ -126,6 +126,7 @@ export function InviteDialog({ trip }: { trip: Trip }) {
                       })
                     }
                     disabled={pending}
+                    className="shrink-0 self-end sm:self-auto"
                   >
                     {pending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

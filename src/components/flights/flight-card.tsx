@@ -22,7 +22,7 @@ export function FlightCard({
 
   return (
     <article className="ticket overflow-visible rounded-2xl">
-      <div className="flex min-h-[148px]">
+      <div className="flex min-h-[148px] flex-col sm:flex-row">
         {/* Main ticket */}
         <div className="flex-1 p-5">
           <div className="flex items-start justify-between gap-3">
@@ -66,7 +66,7 @@ export function FlightCard({
         </div>
 
         {/* Stub */}
-        <div className="ticket-seam w-36 shrink-0 bg-cream/40 p-4 pl-5">
+        <div className="ticket-seam ticket-seam-stack w-full shrink-0 bg-cream/40 p-4 pl-5 sm:w-36">
           <p className="micro text-muted">Booking</p>
           <p className="mt-1 font-mono text-lg font-bold tracking-wider text-ink">
             {flight.booking_ref || "-"}

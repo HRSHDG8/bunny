@@ -66,7 +66,7 @@ export default async function Home() {
           Trip planning, reimagined
         </p>
         <h1
-          className="mt-4 max-w-3xl animate-fade-up font-display text-6xl font-semibold leading-[0.98] tracking-tight sm:text-7xl"
+          className="mt-4 max-w-3xl animate-fade-up font-display text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl"
           style={{ animationDelay: "160ms" }}
         >
           Your next trip,
