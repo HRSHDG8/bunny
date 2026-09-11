@@ -1,0 +1,183 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Brand palette: "Passport paper" ─────────────────────────── */
+  --color-paper: #f9f4ea;
+  --color-cream: #f1e8d6;
+  --color-card: #fffdf7;
+  --color-ink: #21252e;
+  --color-ink-soft: #45484f;
+  --color-muted: #837c6e;
+  --color-line: #e7dcc5;
+  --color-line-strong: #d8c9a9;
+
+  --color-rust: #c3552a;
+  --color-rust-deep: #9f3f1d;
+  --color-rust-soft: #f4e2d8;
+  --color-amber: #bd861e;
+  --color-amber-soft: #f3e7c8;
+  --color-sea: #2f6f6a;
+  --color-sea-deep: #22504d;
+  --color-sea-soft: #dce8e4;
+
+  /* ── Typography ──────────────────────────────────────────────── */
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-fraunces);
+
+  /* ── Elevation ───────────────────────────────────────────────── */
+  --shadow-card: 0 1px 2px rgb(33 37 46 / 0.04), 0 12px 28px -14px rgb(33 37 46 / 0.14);
+  --shadow-pop: 0 4px 12px rgb(33 37 46 / 0.08), 0 28px 60px -20px rgb(33 37 46 / 0.28);
+
+  /* ── Motion ──────────────────────────────────────────────────── */
+  --animate-fade-up: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-in: fade-in 0.5s ease-out both;
+  --animate-float: float 7s ease-in-out infinite;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0) rotate(var(--float-rotate, 0deg));
+    }
+    50% {
+      transform: translateY(-8px) rotate(var(--float-rotate, 0deg));
+    }
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans), system-ui, sans-serif;
+  }
+
+  ::selection {
+    background-color: var(--color-rust);
+    color: #fff;
+  }
+
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"] {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+}
+
+@layer components {
+  .paper-texture {
+    background-image:
+      radial-gradient(rgb(33 37 46 / 0.03) 1px, transparent 1px),
+      radial-gradient(rgb(33 37 46 / 0.025) 1px, transparent 1px);
+    background-size: 22px 22px, 34px 34px;
+    background-position: 0 0, 11px 11px;
+  }
+
+  /* Vintage circled stamp — passport style */
+  .stamp {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 2px dashed currentColor;
+    padding: 0.35rem 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    transform: rotate(var(--stamp-rotate, -4deg));
+  }
+
+  /* Boarding-pass style card */
+  .ticket {
+    position: relative;
+    background-color: var(--color-card);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+
+  /* Perforated seam between ticket halves */
+  .ticket-seam {
+    position: relative;
+    border-left: 2px dashed var(--color-line-strong);
+  }
+  .ticket-seam::before,
+  .ticket-seam::after {
+    content: "";
+    position: absolute;
+    left: -14px;
+    width: 26px;
+    height: 26px;
+    border-radius: 9999px;
+    background-color: var(--color-paper);
+  }
+  .ticket-seam::before {
+    top: -14px;
+  }
+  .ticket-seam::after {
+    bottom: -14px;
+  }
+
+  /* Dashed route line used by the itinerary timeline */
+  .route-line {
+    position: relative;
+  }
+  .route-line::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 15px;
+    width: 2px;
+    background-image: linear-gradient(to bottom, var(--color-line-strong) 55%, transparent 45%);
+    background-size: 2px 10px;
+    background-repeat: repeat-y;
+  }
+
+  /* Small text used for ticket captions */
+  .micro {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-fade-in,
+  .animate-float {
+    animation: none;
+  }
+}
+
+dialog::backdrop {
+  background-color: rgb(21 24 31 / 0.45);
+  backdrop-filter: blur(3px);
+}
