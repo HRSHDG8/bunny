@@ -134,7 +134,7 @@ export function DayPlanner({
             <EmptyState
               icon={<MapPin className="h-7 w-7" />}
               title={`Day ${activeDay} is wide open`}
-              body="Search a place, add notes and rough times — the map pins it automatically."
+              body="Search a place, add notes and rough times - the map pins it automatically."
               action={
                 <Button onClick={openNew} variant="outline">
                   <Plus className="h-4 w-4" /> Plan {activeDayInfo?.label.split(",")[0]}
@@ -240,7 +240,7 @@ function TimelineItem({
           {/* time */}
           <div className="w-16 shrink-0 text-center">
             <p className="font-display text-2xl font-semibold leading-none text-ink">
-              {item.start_time ? item.start_time.slice(0, 5) : "—"}
+              {item.start_time ? item.start_time.slice(0, 5) : "-"}
             </p>
             {item.end_time ? (
               <p className="mt-1 text-[11px] font-semibold text-muted">

@@ -37,7 +37,7 @@ export default async function LoginPage(
             Every great trip starts with a plan.
           </h1>
           <p className="mt-5 max-w-sm text-[15px] leading-relaxed text-cream/80">
-            Flights, rental cars, and a day-by-day itinerary — organized like
+            Flights, rental cars, and a day-by-day itinerary - organized like
             a beautifully stamped passport, ready before your bags are packed.
             Inspired by my wife&apos;s love for planning and extreme attention
             to detail.

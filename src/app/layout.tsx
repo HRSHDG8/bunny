@@ -18,11 +18,11 @@ const fraunces = Fraunces({
 
 export const metadata: Metadata = {
   title: {
-    default: "bunny — trip planning that feels like a postcard",
+    default: "bunny - trip planning that feels like a postcard",
     template: "%s · bunny",
   },
   description:
-    "Plan every day of your trip: flights, rentals, and a day-by-day itinerary — all in one beautifully simple place.",
+    "Plan every day of your trip: flights, rentals, and a day-by-day itinerary - all in one beautifully simple place.",
   icons: {
     icon: "/bunny logo white.jpeg",
   },

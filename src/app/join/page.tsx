@@ -44,7 +44,7 @@ export default async function JoinPage(props: PageProps<"/join">) {
               <p className="mt-1 text-[15px] text-cream/75">{preview.title}</p>
               <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-cream/15 bg-cream/5 px-3 py-1 text-[13px] text-cream/85">
                 {format(new Date(`${preview.start_date}T00:00:00`), "MMM d, yyyy")}
-                {" — "}
+                {" - "}
                 {format(new Date(`${preview.end_date}T00:00:00`), "MMM d, yyyy")}
               </p>
             </div>

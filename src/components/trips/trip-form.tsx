@@ -113,7 +113,7 @@ export function TripForm({
 
       <Field
         label="Arrival notes"
-        hint="Flight numbers, road trip stops, port names — anything for getting there."
+        hint="Flight numbers, road trip stops, port names - anything for getting there."
       >
         <Textarea
           name="arrival_notes"

@@ -44,7 +44,7 @@ export default async function DashboardPage() {
             </h1>
             <p className="mt-1.5 text-sm text-muted">
               {trips.length === 0
-                ? "Nothing planned yet — let's fix that."
+                ? "Nothing planned yet - let's fix that."
                 : trips.length === 1
                   ? "One adventure on the board."
                   : `${trips.length} adventures on the board.`}

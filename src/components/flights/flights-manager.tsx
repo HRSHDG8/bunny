@@ -50,7 +50,7 @@ export function FlightsManager({
         <EmptyState
           icon={<Plane className="h-8 w-8" />}
           title="No flights yet"
-          body="Add your outbound and return flights — airline, flight number, times, and booking reference."
+          body="Add your outbound and return flights - airline, flight number, times, and booking reference."
           action={
             <Button onClick={openNew} variant="outline">
               <Plus className="h-4 w-4" /> Add your first flight

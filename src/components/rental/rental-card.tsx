@@ -56,7 +56,7 @@ export function RentalCard({
             </span>
             {rental.pickup_place || rental.dropoff_place ? (
               <span className="text-muted">
-                {rental.pickup_place || "—"} → {rental.dropoff_place || "—"}
+                {rental.pickup_place || "-"} → {rental.dropoff_place || "-"}
               </span>
             ) : null}
           </div>
@@ -71,7 +71,7 @@ export function RentalCard({
           <div>
             <p className="micro text-muted">Booking</p>
             <p className="mt-1 font-mono text-base font-bold tracking-wider text-ink">
-              {rental.booking_ref || "—"}
+              {rental.booking_ref || "-"}
             </p>
           </div>
           <div>

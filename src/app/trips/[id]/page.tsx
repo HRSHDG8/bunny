@@ -128,7 +128,7 @@ export default async function TripOverviewPage(
       {rentals.length === 0 ? (
         <EmptyState
           title="No rental car yet"
-          body="Keep booking details here — and the plate number when you collect it."
+          body="Keep booking details here - and the plate number when you collect it."
           action={<GoLink href={`/trips/${trip.id}/rental`} label="Add a rental" />}
         />
       ) : (

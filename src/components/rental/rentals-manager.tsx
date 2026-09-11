@@ -42,7 +42,7 @@ export function RentalsManager({
         <EmptyState
           icon={<Car className="h-8 w-8" />}
           title="No rental car yet"
-          body="Save the company, pickup and drop-off details — and jot the plate number down when you pick it up."
+          body="Save the company, pickup and drop-off details - and jot the plate number down when you pick it up."
           action={
             <Button variant="outline" onClick={() => { setEditing(null); setOpen(true); }}>
               <Plus className="h-4 w-4" /> Add a rental

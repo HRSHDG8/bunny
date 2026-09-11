@@ -63,7 +63,7 @@ export default async function TripLayout({
                 <span className="inline-flex items-center gap-2">
                   <CalendarDays className="h-4 w-4 text-amber" />
                   <span className="font-semibold">
-                    {format(start, "MMM d, yyyy")} — {format(end, "MMM d, yyyy")}
+                    {format(start, "MMM d, yyyy")} - {format(end, "MMM d, yyyy")}
                   </span>
                 </span>
               </div>

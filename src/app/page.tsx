@@ -107,12 +107,12 @@ export default async function Home() {
             {
               icon: Plane,
               title: "Flights, in a boarding pass",
-              body: "Airline, number, times, seat, and booking — everything you'll shove in your pocket.",
+              body: "Airline, number, times, seat, and booking - everything you'll shove in your pocket.",
             },
             {
               icon: Car,
               title: "Rental, down to the plate",
-              body: "Pickup, drop-off, booking ref — and a slot for the car's number, when you get the keys.",
+              body: "Pickup, drop-off, booking ref - and a slot for the car's number, when you get the keys.",
             },
             {
               icon: Map,
@@ -141,7 +141,7 @@ export default async function Home() {
       <footer className="relative z-10 border-t border-line/70">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-7 text-sm text-muted">
           <p className="inline-flex items-center gap-2">
-            <Compass className="h-4 w-4 text-rust" /> bunny — plan. pack. go.
+            <Compass className="h-4 w-4 text-rust" /> bunny - plan. pack. go.
           </p>
           <p className="inline-flex items-center gap-1.5 text-xs">
             <Stamp className="h-3.5 w-3.5 text-amber" /> Built for wanderers

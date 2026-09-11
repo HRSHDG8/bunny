@@ -20,7 +20,7 @@ export default async function NewTripPage() {
           Where to next?
         </h1>
         <p className="mt-2 text-sm text-muted">
-          Set the basics now — you can shape flights, rental, and each day&apos;s
+          Set the basics now - you can shape flights, rental, and each day&apos;s
           plan right after.
         </p>
 

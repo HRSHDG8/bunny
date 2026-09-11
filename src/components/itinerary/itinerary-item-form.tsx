@@ -81,7 +81,7 @@ export function ItineraryItemForm({
 
       <Field
         label="Find a place"
-        hint="Optional — search picks up the name and coordinates automatically."
+        hint="Optional - search picks up the name and coordinates automatically."
       >
         <PlaceSearch onSelect={handleSelectPlace} defaultValue={item?.place_name ?? ""} />
       </Field>

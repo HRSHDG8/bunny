@@ -17,8 +17,8 @@ export function FlightCard({
   onEdit?: () => void;
   onDelete?: () => void;
 }) {
-  const dep = flight.departure_code || flight.departure_place?.slice(0, 6) || "—";
-  const arr = flight.arrival_code || flight.arrival_place?.slice(0, 6) || "—";
+  const dep = flight.departure_code || flight.departure_place?.slice(0, 6) || "-";
+  const arr = flight.arrival_code || flight.arrival_place?.slice(0, 6) || "-";
 
   return (
     <article className="ticket overflow-visible rounded-2xl">
@@ -29,7 +29,7 @@ export function FlightCard({
             <div>
               <p className="micro text-muted">{flight.airline || "Flight"}</p>
               <p className="mt-0.5 font-display text-2xl font-semibold tracking-tight text-ink">
-                {flight.flight_number || "—"}
+                {flight.flight_number || "-"}
               </p>
             </div>
             <div className="flex items-center gap-1">
@@ -69,11 +69,11 @@ export function FlightCard({
         <div className="ticket-seam w-36 shrink-0 bg-cream/40 p-4 pl-5">
           <p className="micro text-muted">Booking</p>
           <p className="mt-1 font-mono text-lg font-bold tracking-wider text-ink">
-            {flight.booking_ref || "—"}
+            {flight.booking_ref || "-"}
           </p>
           <p className="micro mt-4 text-muted">Seat</p>
           <p className="mt-1 font-mono text-lg font-bold tracking-wider text-ink">
-            {flight.seat || "—"}
+            {flight.seat || "-"}
           </p>
           {flight.notes ? (
             <>

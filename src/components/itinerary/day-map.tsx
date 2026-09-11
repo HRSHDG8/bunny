@@ -59,7 +59,7 @@ export function DayMap({ markers, title }: { markers: Marker[]; title: string })
       <div className="relative h-56 sm:h-64">
         {fallback ? (
           <div className="flex h-full items-center justify-center bg-cream/40 text-sm text-muted">
-            Map preview unavailable — coordinates are saved.
+            Map preview unavailable - coordinates are saved.
           </div>
         ) : (
           <iframe

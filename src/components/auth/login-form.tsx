@@ -33,7 +33,7 @@ export function LoginForm({ next }: { next: string }) {
   function handleGoogle() {
     withPending(async () => {
       if (!configured) {
-        setError("Supabase isn't configured yet — add your keys to .env.local.");
+        setError("Supabase isn't configured yet - add your keys to .env.local.");
         return;
       }
       const supabase = createClient();
@@ -53,7 +53,7 @@ export function LoginForm({ next }: { next: string }) {
 
     withPending(async () => {
       if (!configured) {
-        setError("Supabase isn't configured yet — add your keys to .env.local.");
+        setError("Supabase isn't configured yet - add your keys to .env.local.");
         return;
       }
       const supabase = createClient();
@@ -70,7 +70,7 @@ export function LoginForm({ next }: { next: string }) {
         });
         if (error) throw error;
         if (!res.session) {
-          setNotice("Check your inbox — we sent you a link to confirm your email.");
+          setNotice("Check your inbox - we sent you a link to confirm your email.");
         } else {
           router.push(next);
           router.refresh();
