@@ -31,7 +31,7 @@ export default async function JoinPage(props: PageProps<"/join">) {
         email={user.email ?? undefined}
         name={user.user_metadata?.full_name ?? undefined}
       />
-      <main className="mx-auto w-full max-w-md flex-1 px-4 py-16 sm:px-6">
+      <main className="mx-auto w-full max-w-md flex-1 px-5 py-16 sm:px-6">
         {preview ? (
           <div className="overflow-hidden rounded-3xl border border-line/70 bg-card shadow-pop">
             <div className="relative bg-gradient-to-br from-ink via-ink to-sea-deep p-7 text-cream">

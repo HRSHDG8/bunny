@@ -14,7 +14,7 @@ export function SiteHeader({
 }) {
   return (
     <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/85 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-5 sm:px-6">
         <SiteMark />
         <div className="flex items-center gap-2">
           {showNewTrip ? (

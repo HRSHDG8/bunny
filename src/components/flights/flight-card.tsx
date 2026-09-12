@@ -48,7 +48,7 @@ export function FlightCard({
 
           <div className="mt-4 flex items-center gap-2">
             <div className="flex-1">
-              <p className="font-display text-3xl font-semibold text-ink">{dep}</p>
+              <p className="font-display text-2xl font-semibold text-ink sm:text-3xl">{dep}</p>
               <p className="text-[11px] font-medium text-muted">{flight.departure_place}</p>
               <p className="mt-0.5 text-[12px] font-semibold text-sea">{fmtTime(flight.departure_time)}</p>
             </div>
@@ -58,7 +58,7 @@ export function FlightCard({
               <span className="h-px flex-1 border-t border-dashed border-line-strong" />
             </div>
             <div className="flex-1 text-right">
-              <p className="font-display text-3xl font-semibold text-ink">{arr}</p>
+              <p className="font-display text-2xl font-semibold text-ink sm:text-3xl">{arr}</p>
               <p className="text-[11px] font-medium text-muted">{flight.arrival_place}</p>
               <p className="mt-0.5 text-[12px] font-semibold text-rust">{fmtTime(flight.arrival_time)}</p>
             </div>

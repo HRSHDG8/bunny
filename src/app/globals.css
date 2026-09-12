@@ -75,6 +75,7 @@
     background-color: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans), system-ui, sans-serif;
+    overflow-x: clip;
   }
 
   ::selection {

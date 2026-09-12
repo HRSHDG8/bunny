@@ -14,7 +14,7 @@ export default async function NewTripPage() {
   return (
     <>
       <SiteHeader showNewTrip={false} email={user.email ?? undefined} name={user.user_metadata?.full_name ?? undefined} />
-      <main className="mx-auto w-full max-w-xl flex-1 px-4 py-12 sm:px-6">
+      <main className="mx-auto w-full max-w-xl flex-1 px-5 py-12 sm:px-6">
         <p className="micro text-muted">New adventure</p>
         <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight">
           Where to next?

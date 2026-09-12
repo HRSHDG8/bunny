@@ -238,7 +238,7 @@ function TimelineItem({
       <div className="group relative rounded-2xl border border-line/70 bg-card p-4 pr-2 shadow-card transition-shadow hover:shadow-pop sm:p-5 sm:pr-3">
         <div className="flex items-start gap-3 sm:gap-4">
           {/* time */}
-          <div className="w-16 shrink-0 text-center">
+          <div className="w-14 shrink-0 text-center sm:w-16">
             <p className="font-display text-2xl font-semibold leading-none text-ink">
               {item.start_time ? item.start_time.slice(0, 5) : "-"}
             </p>

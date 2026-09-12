@@ -35,7 +35,7 @@ export default async function DashboardPage() {
         email={user.email ?? undefined}
         name={user.user_metadata?.full_name ?? undefined}
       />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-10 sm:px-6">
         <div className="mb-10 flex items-end justify-between gap-4">
           <div>
             <p className="micro text-muted">{greeting}, {firstName}.</p>

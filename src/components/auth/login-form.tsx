@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Loader2, Lock, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { isConfigured } from "@/lib/supabase/config";
+import { appBaseUrl, isConfigured } from "@/lib/supabase/config";
 import { Button, Field, Input } from "@/components/ui";
 
 export function LoginForm({ next }: { next: string }) {
@@ -17,6 +17,7 @@ export function LoginForm({ next }: { next: string }) {
   const router = useRouter();
 
   const configured = isConfigured();
+  const base = appBaseUrl() || window.location.origin;
 
   function withPending(fn: () => Promise<void>) {
     setError(null);
@@ -39,7 +40,9 @@ export function LoginForm({ next }: { next: string }) {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
+        options: {
+          redirectTo: `${base}/auth/callback?next=${encodeURIComponent(next)}`,
+        },
       });
       if (error) throw error;
     });
@@ -66,7 +69,9 @@ export function LoginForm({ next }: { next: string }) {
         const { error, data: res } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
+          options: {
+            emailRedirectTo: `${base}/auth/callback?next=${encodeURIComponent(next)}`,
+          },
         });
         if (error) throw error;
         if (!res.session) {

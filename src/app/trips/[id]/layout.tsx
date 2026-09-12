@@ -42,7 +42,7 @@ export default async function TripLayout({
         email={user.email ?? undefined}
         name={user.user_metadata?.full_name ?? undefined}
       />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-16 pt-8 sm:px-6">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-5 pb-16 pt-8 sm:px-6">
         {/* Trip hero */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-ink via-ink to-sea-deep p-7 text-cream shadow-pop sm:p-9">
           <div className="pointer-events-none absolute -right-10 -top-14 h-56 w-56 rounded-full bg-cream/5" />
