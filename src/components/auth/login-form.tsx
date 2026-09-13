@@ -31,18 +31,21 @@ export function LoginForm({ next }: { next: string }) {
     });
   }
 
+  function rememberNext() {
+    document.cookie = `bunny_next=${encodeURIComponent(next)}; path=/; samesite=lax; max-age=600`;
+  }
+
   function handleGoogle() {
     withPending(async () => {
       if (!configured) {
         setError("Supabase isn't configured yet - add your keys to .env.local.");
         return;
       }
+      rememberNext();
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: {
-          redirectTo: `${base}/auth/callback?next=${encodeURIComponent(next)}`,
-        },
+        options: { redirectTo: `${base}/auth/callback` },
       });
       if (error) throw error;
     });
@@ -66,12 +69,11 @@ export function LoginForm({ next }: { next: string }) {
         router.push(next);
         router.refresh();
       } else {
+        rememberNext();
         const { error, data: res } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            emailRedirectTo: `${base}/auth/callback?next=${encodeURIComponent(next)}`,
-          },
+          options: { emailRedirectTo: `${base}/auth/callback` },
         });
         if (error) throw error;
         if (!res.session) {

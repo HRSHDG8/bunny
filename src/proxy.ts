@@ -35,19 +35,28 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getSession() only reads the JWT from cookies (no network call), so a
+  // slow/auth-timing-out Supabase can't stall or crash the proxy. The
+  // authoritative check happens in requireUser() on the actual pages.
+  let signedIn = false;
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    signedIn = Boolean(session);
+  } catch {
+    signedIn = false;
+  }
 
   const { pathname } = request.nextUrl;
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
   const isAuthPage = authPaths.some((p) => pathname.startsWith(p));
 
-  if (user && isAuthPage) {
+  if (signedIn && isAuthPage) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  if (!user && isProtected) {
+  if (!signedIn && isProtected) {
     const url = new URL("/login", request.url);
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);

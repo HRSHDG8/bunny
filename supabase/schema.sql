@@ -68,6 +68,10 @@ create table if not exists public.flights (
 
 create index if not exists flights_trip_id_idx on public.flights(trip_id);
 
+-- each flight can be assigned to one traveler; NULL = applies to the whole trip
+alter table public.flights add column if not exists traveler_id uuid references auth.users(id) on delete set null;
+create index if not exists flights_traveler_idx on public.flights(traveler_id);
+
 drop trigger if exists flights_updated_at on public.flights;
 create trigger flights_updated_at
   before update on public.flights
@@ -91,6 +95,9 @@ create table if not exists public.rentals (
 );
 
 create index if not exists rentals_trip_id_idx on public.rentals(trip_id);
+
+-- optional assigned drivers (trip members); empty = whole trip
+alter table public.rentals add column if not exists driver_ids uuid[] not null default '{}';
 
 drop trigger if exists rentals_updated_at on public.rentals;
 create trigger rentals_updated_at
@@ -174,6 +181,45 @@ grant  execute on function public.is_trip_participant(uuid) to authenticated;
 revoke execute on function public.is_trip_editor(uuid) from public, anon;
 grant  execute on function public.is_trip_editor(uuid) to authenticated;
 
+-- ── who's on the trip ───────────────────────────────────────────
+-- Names the owner + everyone who joined via invite link, so the UI can
+-- assign flights/rentals to specific people. SECURITY DEFINER but gated
+-- on is_trip_participant, so only trip members can list the people.
+create or replace function public.trip_people(p_trip_id uuid)
+returns table (user_id uuid, full_name text, email text, is_owner boolean)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.is_trip_participant(p_trip_id) then
+    return;
+  end if;
+
+  -- explicit ::text casts matter: auth.users.email is citext, and Postgres
+  -- refuses to assign a citext column to a text RETURNS TABLE column.
+  -- Table-qualified columns matter too: RETURNS TABLE puts user_id in scope
+  -- as a variable, so a bare `user_id` here would be ambiguous.
+  return query
+    select p.user_id,
+           coalesce(nullif(u.raw_user_meta_data ->> 'full_name', ''), split_part(coalesce(u.email, ''), '@', 1))::text,
+           u.email::text,
+           (t.user_id = p.user_id)
+      from (
+        select tr.user_id from public.trips tr where tr.id = p_trip_id
+        union
+        select m.user_id from public.trip_members m where m.trip_id = p_trip_id
+      ) p
+      join auth.users u on u.id = p.user_id
+      left join public.trips t on t.id = p_trip_id
+     order by u.email;
+end;
+$$;
+
+revoke execute on function public.trip_people(uuid) from public, anon;
+grant  execute on function public.trip_people(uuid) to authenticated;
+
 -- ── join via invite link ───────────────────────────────────────
 -- The only way (besides the trip owner) to add a member. Validates the
 -- share token, requires a signed-in user, and — when the trip limits
@@ -215,8 +261,13 @@ begin
   if not exists (select 1 from public.trip_members m
                  where m.trip_id = v_trip_id and m.user_id = auth.uid()) then
 
+    if exists (select 1 from public.trips t
+               where t.id = v_trip_id and t.end_date < current_date) then
+      raise exception 'This trip has already ended and can''t be joined.';
+    end if;
+
     if cardinality(v_allowed) > 0 then
-      select email into v_email from auth.users where id = auth.uid();
+      select email::text into v_email from auth.users where id = auth.uid();
       if v_email is null or not exists (
         select 1 from unnest(v_allowed) as a(user_email)
         where lower(a.user_email) = lower(v_email)
@@ -254,6 +305,143 @@ $$;
 
 revoke execute on function public.trip_for_invite(text) from public, anon;
 grant  execute on function public.trip_for_invite(text) to authenticated;
+
+-- ═══════════════════════════════════════════════════════════════
+--  Trip lifecycle rules
+--  (1) A person can have at most 5 ACTIVE trips (end_date >= today)
+--      among the trips they created. Enforced in a BEFORE INSERT
+--      trigger so rapid double-submits can't slip by an app-side
+--      check. Completed trips (end_date < today) don't count.
+--  (2) A COMPLETED trip (end_date < today) is immutable: no edits to
+--      the trip or any of its children, no deletes, no sharing
+--      changes, no new members. Enforced in triggers that always
+--      run — through SECURITY DEFINER functions like join_trip too —
+--      and for every role, not just max_editors.
+--  Both are SECURITY DEFINER so the counts/lookups are immune to RLS.
+-- ═══════════════════════════════════════════════════════════════
+
+-- (1) active-trip quota on create
+create or replace function public.check_trip_active_limit()
+returns trigger
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_active integer;
+begin
+  select count(*) into v_active
+    from public.trips
+   where user_id = new.user_id
+     and end_date >= current_date;
+
+  if v_active >= 5 then
+    raise exception 'You can have up to 5 active trips at once.'
+      using errcode = 'check_violation',
+            hint = 'A trip frees its slot once its end date passes.';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trips_active_limit on public.trips;
+create trigger trips_active_limit
+  before insert on public.trips
+  for each row execute function public.check_trip_active_limit();
+
+-- Is a trip completed (end date in the past)?
+create or replace function public.trip_is_completed(p_trip_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.trips t
+    where t.id = p_trip_id and t.end_date < current_date
+  );
+$$;
+
+-- (2a) freeze the trip row itself
+create or replace function public.prevent_edits_on_completed_trip()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_completed boolean;
+begin
+  if tg_op = 'UPDATE' then
+    v_completed := new.end_date < current_date;
+  else
+    v_completed := old.end_date < current_date;
+  end if;
+
+  if v_completed then
+    raise exception 'This trip has been completed and is now locked - it can''t be changed.'
+      using errcode = 'check_violation';
+  end if;
+
+  if tg_op = 'UPDATE' then
+    return new;
+  end if;
+  return old;
+end;
+$$;
+
+drop trigger if exists trips_no_edits_when_completed on public.trips;
+create trigger trips_no_edits_when_completed
+  before update or delete on public.trips
+  for each row execute function public.prevent_edits_on_completed_trip();
+
+-- (2b) freeze child rows of a completed trip (flights, rentals,
+--      itinerary_items, trip_members)
+create or replace function public.prevent_child_edits_on_completed_trip()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_trip_id uuid;
+begin
+  v_trip_id := coalesce(new.trip_id, old.trip_id);
+
+  if public.trip_is_completed(v_trip_id) then
+    raise exception 'This trip has been completed and is now locked - it can''t be changed.'
+      using errcode = 'check_violation';
+  end if;
+
+  if tg_op = 'INSERT' or tg_op = 'UPDATE' then
+    return new;
+  end if;
+  return old;
+end;
+$$;
+
+drop trigger if exists flights_no_edits_when_completed on public.flights;
+create trigger flights_no_edits_when_completed
+  before insert or update or delete on public.flights
+  for each row execute function public.prevent_child_edits_on_completed_trip();
+
+drop trigger if exists rentals_no_edits_when_completed on public.rentals;
+create trigger rentals_no_edits_when_completed
+  before insert or update or delete on public.rentals
+  for each row execute function public.prevent_child_edits_on_completed_trip();
+
+drop trigger if exists itinerary_no_edits_when_completed on public.itinerary_items;
+create trigger itinerary_no_edits_when_completed
+  before insert or update or delete on public.itinerary_items
+  for each row execute function public.prevent_child_edits_on_completed_trip();
+
+drop trigger if exists trip_members_no_edits_when_completed on public.trip_members;
+create trigger trip_members_no_edits_when_completed
+  before insert or update or delete on public.trip_members
+  for each row execute function public.prevent_child_edits_on_completed_trip();
 
 -- ═══════════════════════════════════════════════════════════════
 --  Row Level Security

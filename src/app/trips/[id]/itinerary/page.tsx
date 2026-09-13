@@ -1,4 +1,4 @@
-import { getItinerary, getTrip, tripDays } from "@/lib/data";
+import { getItinerary, getTrip, isTripCompleted, tripDays } from "@/lib/data";
 import { DayPlanner } from "@/components/itinerary/day-planner";
 
 export const metadata = { title: "Itinerary" };
@@ -15,5 +15,12 @@ export default async function ItineraryPage(
     label: d.label,
   }));
 
-  return <DayPlanner tripId={id} days={days} items={items} />;
+  return (
+    <DayPlanner
+      tripId={id}
+      days={days}
+      items={items}
+      locked={isTripCompleted(trip)}
+    />
+  );
 }

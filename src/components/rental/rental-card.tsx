@@ -1,7 +1,7 @@
 import { format, parseISO } from "date-fns";
 import { Car, CalendarDays, Fuel, KeyRound, Pencil, Trash2 } from "lucide-react";
-import type { Rental } from "@/lib/types";
-import { IconButton } from "@/components/ui";
+import type { Rental, TripPerson } from "@/lib/types";
+import { Badge, IconButton } from "@/components/ui";
 
 function fmtTime(dt: string | null) {
   if (!dt) return "TBD";
@@ -10,13 +10,20 @@ function fmtTime(dt: string | null) {
 
 export function RentalCard({
   rental,
+  people,
+  locked = false,
   onEdit,
   onDelete,
 }: {
   rental: Rental;
+  people: TripPerson[];
+  locked?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
 }) {
+  const drivers = rental.driver_ids
+    .map((id) => people.find((p) => p.user_id === id)?.full_name)
+    .filter((n): n is string => Boolean(n));
   return (
     <article className="ticket overflow-visible rounded-2xl">
       <div className="flex min-h-[150px] flex-col sm:flex-row">
@@ -31,15 +38,26 @@ export function RentalCard({
                 <p className="font-display text-2xl font-semibold tracking-tight text-ink">
                   {rental.car_model || "Car"}
                 </p>
+                <div className="mt-1.5">
+                  {drivers.length > 0 ? (
+                    drivers.map((name) => (
+                      <Badge key={name} tone="sea" className="mr-1">
+                        {name}
+                      </Badge>
+                    ))
+                  ) : (
+                    <Badge tone="amber">Whole trip</Badge>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-1">
-              {onEdit ? (
+              {!locked && onEdit ? (
                 <IconButton label="Edit rental" onClick={onEdit}>
                   <Pencil />
                 </IconButton>
               ) : null}
-              {onDelete ? (
+              {!locked && onDelete ? (
                 <IconButton label="Delete rental" onClick={onDelete} className="text-rust hover:bg-rust-soft">
                   <Trash2 className="h-3.5 w-3.5" />
                 </IconButton>

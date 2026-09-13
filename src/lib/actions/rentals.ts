@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { apiError } from "@/lib/supabase/errors";
 
 export interface RentalInput {
+  driver_ids: string[];
   company: string;
   booking_ref: string;
   car_model: string;
@@ -21,10 +23,13 @@ function tripPaths(tripId: string) {
 
 export async function createRental(tripId: string, input: RentalInput) {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const id = crypto.randomUUID();
+  const { error } = await supabase
     .from("rentals")
     .insert({
+      id,
       trip_id: tripId,
+      driver_ids: input.driver_ids,
       company: input.company || null,
       booking_ref: input.booking_ref || null,
       car_model: input.car_model || null,
@@ -34,12 +39,10 @@ export async function createRental(tripId: string, input: RentalInput) {
       dropoff_place: input.dropoff_place || null,
       dropoff_time: input.dropoff_time || null,
       notes: input.notes || null,
-    })
-    .select()
-    .single();
-  if (error) throw new Error("Couldn't save the rental.");
+    });
+  if (error) throw apiError("Couldn't save the rental.", error);
   tripPaths(tripId).forEach((p) => revalidatePath(p));
-  return data.id;
+  return id;
 }
 
 export async function updateRental(id: string, tripId: string, input: RentalInput) {
@@ -47,6 +50,7 @@ export async function updateRental(id: string, tripId: string, input: RentalInpu
   const { error } = await supabase
     .from("rentals")
     .update({
+      driver_ids: input.driver_ids,
       company: input.company || null,
       booking_ref: input.booking_ref || null,
       car_model: input.car_model || null,
@@ -58,13 +62,13 @@ export async function updateRental(id: string, tripId: string, input: RentalInpu
       notes: input.notes || null,
     })
     .eq("id", id);
-  if (error) throw new Error("Couldn't save the rental.");
+  if (error) throw apiError("Couldn't save the rental.", error);
   tripPaths(tripId).forEach((p) => revalidatePath(p));
 }
 
 export async function deleteRental(id: string, tripId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("rentals").delete().eq("id", id);
-  if (error) throw new Error("Couldn't delete the rental.");
+  if (error) throw apiError("Couldn't delete the rental.", error);
   tripPaths(tripId).forEach((p) => revalidatePath(p));
 }

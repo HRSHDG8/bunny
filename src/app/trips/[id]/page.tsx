@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Car, MapPin, Plane, Train, Ship, Footprints } from "lucide-react";
-import { getFlights, getItinerary, getRentals, getTrip, tripDays } from "@/lib/data";
+import { getFlights, getItinerary, getRentals, getTrip, getTripPeople, isTripCompleted, tripDays } from "@/lib/data";
 import { FlightCard } from "@/components/flights/flight-card";
 import { RentalCard } from "@/components/rental/rental-card";
 import { Badge, Card, EmptyState } from "@/components/ui";
@@ -22,16 +22,18 @@ export default async function TripOverviewPage(
   props: PageProps<"/trips/[id]">,
 ) {
   const { id } = await props.params;
-  const [trip, flights, rentals, items] = await Promise.all([
+  const [trip, flights, rentals, items, people] = await Promise.all([
     getTrip(id),
     getFlights(id),
     getRentals(id),
     getItinerary(id),
+    getTripPeople(id),
   ]);
 
   const days = tripDays(trip);
   const plannedDays = new Set(items.map((i) => i.day_number)).size;
   const arrival = trip.arrival_method ? arrivalMeta[trip.arrival_method] : null;
+  const locked = isTripCompleted(trip);
 
   return (
     <div className="space-y-6">
@@ -114,7 +116,7 @@ export default async function TripOverviewPage(
       ) : (
         <div className="space-y-4">
           {flights.slice(0, 2).map((f) => (
-            <FlightCard key={f.id} flight={f} />
+            <FlightCard key={f.id} flight={f} people={people} locked={locked} />
           ))}
         </div>
       )}
@@ -134,7 +136,7 @@ export default async function TripOverviewPage(
       ) : (
         <div className="space-y-4">
           {rentals.slice(0, 1).map((r) => (
-            <RentalCard key={r.id} rental={r} />
+            <RentalCard key={r.id} rental={r} people={people} locked={locked} />
           ))}
         </div>
       )}

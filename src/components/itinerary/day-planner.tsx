@@ -31,10 +31,12 @@ export function DayPlanner({
   tripId,
   days,
   items,
+  locked = false,
 }: {
   tripId: string;
   days: DayInfo[];
   items: ItineraryItem[];
+  locked?: boolean;
 }) {
   const [activeDay, setActiveDay] = React.useState(days[0]?.dayNumber ?? 1);
   const [open, setOpen] = React.useState(false);
@@ -77,9 +79,11 @@ export function DayPlanner({
             Plot each day like a stamped passport.
           </p>
         </div>
-        <Button onClick={openNew}>
-          <Plus className="h-4 w-4" /> Add an activity
-        </Button>
+        {!locked ? (
+          <Button onClick={openNew}>
+            <Plus className="h-4 w-4" /> Add an activity
+          </Button>
+        ) : null}
       </div>
 
       {/* Day picker */}
@@ -136,9 +140,11 @@ export function DayPlanner({
               title={`Day ${activeDay} is wide open`}
               body="Search a place, add notes and rough times - the map pins it automatically."
               action={
-                <Button onClick={openNew} variant="outline">
-                  <Plus className="h-4 w-4" /> Plan {activeDayInfo?.label.split(",")[0]}
-                </Button>
+                !locked ? (
+                  <Button onClick={openNew} variant="outline">
+                    <Plus className="h-4 w-4" /> Plan {activeDayInfo?.label.split(",")[0]}
+                  </Button>
+                ) : undefined
               }
             />
           ) : (
@@ -153,6 +159,7 @@ export function DayPlanner({
                   item={item}
                   isFirst={index === 0}
                   isLast={index === dayItems.length - 1}
+                  locked={locked}
                   onEdit={() => openEdit(item)}
                   onDelete={() => handleDelete(item)}
                   onMoveUp={() => handleMove(item, "up")}
@@ -203,6 +210,7 @@ function TimelineItem({
   item,
   isFirst,
   isLast,
+  locked = false,
   onEdit,
   onDelete,
   onMoveUp,
@@ -211,6 +219,7 @@ function TimelineItem({
   item: ItineraryItem;
   isFirst: boolean;
   isLast: boolean;
+  locked?: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onMoveUp: () => void;
@@ -285,20 +294,22 @@ function TimelineItem({
           </div>
 
           {/* actions */}
-          <div className="flex shrink-0 flex-col items-center gap-0.5 self-start opacity-60 transition-opacity group-hover:opacity-100">
-            <IconButton label="Move earlier" onClick={onMoveUp} disabled={isFirst} className="h-7 w-7 hover:bg-cream">
-              <ChevronUp className="h-4 w-4" />
-            </IconButton>
-            <IconButton label="Move later" onClick={onMoveDown} disabled={isLast} className="h-7 w-7 hover:bg-cream">
-              <ChevronDown className="h-4 w-4" />
-            </IconButton>
-            <IconButton label="Edit activity" onClick={onEdit} className="mt-1 h-7 w-7">
-              <Pencil className="h-3.5 w-3.5" />
-            </IconButton>
-            <IconButton label="Delete activity" onClick={onDelete} className="h-7 w-7 text-rust hover:bg-rust-soft">
-              <Trash2 className="h-3.5 w-3.5" />
-            </IconButton>
-          </div>
+          {!locked ? (
+            <div className="flex shrink-0 flex-col items-center gap-0.5 self-start opacity-60 transition-opacity group-hover:opacity-100">
+              <IconButton label="Move earlier" onClick={onMoveUp} disabled={isFirst} className="h-7 w-7 hover:bg-cream">
+                <ChevronUp className="h-4 w-4" />
+              </IconButton>
+              <IconButton label="Move later" onClick={onMoveDown} disabled={isLast} className="h-7 w-7 hover:bg-cream">
+                <ChevronDown className="h-4 w-4" />
+              </IconButton>
+              <IconButton label="Edit activity" onClick={onEdit} className="mt-1 h-7 w-7">
+                <Pencil className="h-3.5 w-3.5" />
+              </IconButton>
+              <IconButton label="Delete activity" onClick={onDelete} className="h-7 w-7 text-rust hover:bg-rust-soft">
+                <Trash2 className="h-3.5 w-3.5" />
+              </IconButton>
+            </div>
+          ) : null}
         </div>
       </div>
     </li>

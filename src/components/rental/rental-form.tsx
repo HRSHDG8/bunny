@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import { CalendarDays, KeyRound } from "lucide-react";
+import { CalendarDays, KeyRound, UsersRound } from "lucide-react";
 import { createRental, updateRental } from "@/lib/actions/rentals";
-import type { Rental } from "@/lib/types";
+import type { Rental, TripPerson } from "@/lib/types";
 import { Button, Field, Input, Textarea } from "@/components/ui";
 
 function toLocal(dt: string | null) {
@@ -16,10 +16,12 @@ function toLocal(dt: string | null) {
 export function RentalForm({
   tripId,
   rental,
+  people,
   onSaved,
 }: {
   tripId: string;
   rental?: Rental;
+  people: TripPerson[];
   onSaved?: () => void;
 }) {
   const [error, setError] = React.useState<string | null>(null);
@@ -29,6 +31,7 @@ export function RentalForm({
     e.preventDefault();
     const data = new FormData(e.currentTarget);
     const input = {
+      driver_ids: data.getAll("driver_ids").map(String),
       company: String(data.get("company") ?? "").trim(),
       booking_ref: String(data.get("booking_ref") ?? "").trim(),
       car_model: String(data.get("car_model") ?? "").trim(),
@@ -93,6 +96,35 @@ export function RentalForm({
           />
         </Field>
       </div>
+
+      <Field
+        label={
+          <span className="inline-flex items-center gap-1.5">
+            <UsersRound className="h-3.5 w-3.5 text-sea" />
+            Drivers
+          </span>
+        }
+        hint="Who'll drive? Leave unchecked to count as a trip-wide booking."
+      >
+        <div className="space-y-2">
+          {people.map((p) => (
+            <label
+              key={p.user_id}
+              className="flex cursor-pointer items-center gap-3 rounded-xl border border-line bg-cream/30 px-3.5 py-2.5 text-sm font-medium text-ink hover:border-sea/40"
+            >
+              <input
+                type="checkbox"
+                name="driver_ids"
+                value={p.user_id}
+                defaultChecked={rental?.driver_ids.includes(p.user_id) ?? false}
+                className="h-4 w-4 accent-sea"
+              />
+              <span className="flex-1">{p.full_name}</span>
+              {p.is_owner ? <span className="text-xs text-muted">Owner</span> : null}
+            </label>
+          ))}
+        </div>
+      </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="rounded-2xl border border-line bg-cream/30 p-4">

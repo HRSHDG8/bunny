@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { apiError } from "@/lib/supabase/errors";
 
 export interface ItineraryInput {
   day_number: number;
@@ -37,11 +38,13 @@ export async function createItineraryItem(
     .order("sort_order", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (lastErr) throw new Error("Couldn't plan this activity.");
+  if (lastErr) throw apiError("Couldn't plan this activity.", lastErr);
 
-  const { data, error } = await supabase
+  const id = crypto.randomUUID();
+  const { error } = await supabase
     .from("itinerary_items")
     .insert({
+      id,
       trip_id: tripId,
       day_number: input.day_number,
       title: input.title.trim(),
@@ -52,12 +55,10 @@ export async function createItineraryItem(
       end_time: input.end_time || null,
       notes: input.notes.trim() || null,
       sort_order: (last?.sort_order ?? 0) + 1,
-    })
-    .select()
-    .single();
-  if (error) throw new Error("Couldn't add the activity.");
+    });
+  if (error) throw apiError("Couldn't add the activity.", error);
   revalidatePath(path(tripId));
-  return data.id;
+  return id;
 }
 
 export async function updateItineraryItem(
@@ -80,14 +81,14 @@ export async function updateItineraryItem(
       notes: input.notes.trim() || null,
     })
     .eq("id", id);
-  if (error) throw new Error("Couldn't save the activity.");
+  if (error) throw apiError("Couldn't save the activity.", error);
   revalidatePath(path(tripId));
 }
 
 export async function deleteItineraryItem(id: string, tripId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("itinerary_items").delete().eq("id", id);
-  if (error) throw new Error("Couldn't delete the activity.");
+  if (error) throw apiError("Couldn't delete the activity.", error);
   revalidatePath(path(tripId));
 }
 
@@ -103,7 +104,7 @@ export async function moveItineraryItem(
     .select("day_number, sort_order")
     .eq("id", id)
     .single();
-  if (curErr || !current) throw new Error("Couldn't reorder the activity.");
+  if (curErr || !current) throw apiError("Couldn't reorder the activity.", curErr);
 
   const { data: all, error: allErr } = await supabase
     .from("itinerary_items")
@@ -111,7 +112,7 @@ export async function moveItineraryItem(
     .eq("trip_id", tripId)
     .eq("day_number", current.day_number)
     .order("sort_order", { ascending: true });
-  if (allErr) throw new Error("Couldn't reorder the activity.");
+  if (allErr) throw apiError("Couldn't reorder the activity.", allErr);
 
   const index = all.findIndex((i) => i.id === id);
   const target = direction === "up" ? index - 1 : index + 1;
@@ -127,6 +128,7 @@ export async function moveItineraryItem(
     .update({ sort_order: current.sort_order })
     .eq("id", neighbor.id);
   const results = await Promise.all([a, b]);
-  if (results.some((r) => r.error)) throw new Error("Couldn't reorder the activity.");
+  const reorderErr = results.find((r) => r.error)?.error;
+  if (reorderErr) throw apiError("Couldn't reorder the activity.", reorderErr);
   revalidatePath(path(tripId));
 }

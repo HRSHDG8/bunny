@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/data";
+import { getActiveTripCount, getCurrentUser } from "@/lib/data";
 import { SiteHeader } from "@/components/site-header";
 import { TripForm } from "@/components/trips/trip-form";
 
@@ -10,6 +10,9 @@ export const dynamic = "force-dynamic";
 export default async function NewTripPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+
+  const active = await getActiveTripCount(user.id);
+  const remaining = Math.max(0, 5 - active);
 
   return (
     <>
@@ -25,7 +28,7 @@ export default async function NewTripPage() {
         </p>
 
         <div className="mt-8 rounded-3xl border border-line/70 bg-card p-6 shadow-card sm:p-8">
-          <TripForm />
+          <TripForm remaining={remaining} />
         </div>
       </main>
     </>

@@ -4,6 +4,7 @@ import {
   getCurrentUser,
   getTrip,
   getTripMembership,
+  isTripCompleted,
   tripDays,
 } from "@/lib/data";
 import { notFound } from "next/navigation";
@@ -31,6 +32,7 @@ export default async function TripLayout({
     ? null
     : await getTripMembership(id).catch(() => null);
   const canManage = isOwner || membership?.role === "editor";
+  const completed = isTripCompleted(trip);
 
   const start = new Date(`${trip.start_date}T00:00:00`);
   const end = new Date(`${trip.end_date}T00:00:00`);
@@ -66,12 +68,17 @@ export default async function TripLayout({
                     {format(start, "MMM d, yyyy")} - {format(end, "MMM d, yyyy")}
                   </span>
                 </span>
+                {completed ? (
+                  <span className="stamp bg-transparent text-cream/40">
+                    Completed
+                  </span>
+                ) : null}
               </div>
             </div>
 
             <div className="flex items-center gap-1.5 rounded-2xl border border-cream/15 bg-cream/5 p-1.5">
-              {canManage ? <EditTripDialog trip={trip} /> : null}
-              {isOwner ? (
+              {!completed && canManage ? <EditTripDialog trip={trip} /> : null}
+              {!completed && isOwner ? (
                 <>
                   <InviteDialog trip={trip} />
                   <DeleteTripButton tripId={trip.id} tripName={trip.title} />
@@ -79,6 +86,14 @@ export default async function TripLayout({
               ) : null}
             </div>
           </div>
+
+          {completed ? (
+            <div className="relative mt-5 flex items-center gap-2 rounded-2xl border border-cream/15 bg-cream/5 px-4 py-3 text-sm text-cream/80">
+              <span className="micro text-cream/50">Locked</span>
+              This trip has ended and is now read-only - nothing can be edited
+              or deleted.
+            </div>
+          ) : null}
         </div>
 
         <div className="mt-6">

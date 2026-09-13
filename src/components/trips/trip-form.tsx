@@ -8,18 +8,20 @@ import { Button, Field, Input, Select, Textarea } from "@/components/ui";
 
 const arrivalOptions = [
   { value: "", label: "Not set yet" },
-  { value: "flight", label: "✈️ Flight" },
-  { value: "train", label: "🚆 Train" },
-  { value: "drive", label: "🚗 Driving" },
-  { value: "cruise", label: "🚢 Cruise" },
-  { value: "other", label: "🌍 Other" },
+  { value: "flight", label: "Flight" },
+  { value: "train", label: "Train" },
+  { value: "drive", label: "Driving" },
+  { value: "cruise", label: "Cruise" },
+  { value: "other", label: "Other" },
 ];
 
 export function TripForm({
   trip,
+  remaining,
   onSaved,
 }: {
   trip?: Trip;
+  remaining?: number;
   onSaved?: () => void;
 }) {
   const [error, setError] = React.useState<string | null>(null);
@@ -111,8 +113,7 @@ export function TripForm({
         </Select>
       </Field>
 
-      <Field
-        label="Arrival notes"
+      <Field label="Arrival notes"
         hint="Flight numbers, road trip stops, port names - anything for getting there."
       >
         <Textarea
@@ -121,6 +122,21 @@ export function TripForm({
           defaultValue={trip?.arrival_notes ?? ""}
         />
       </Field>
+
+      {remaining !== undefined ? (
+        remaining > 0 ? (
+          <p className="text-[13px] text-muted">
+            You can create up to {remaining} more active{" "}
+            {remaining === 1 ? "trip" : "trips"}. Completed trips free their
+            slot.
+          </p>
+        ) : (
+          <p className="rounded-xl border border-amber/30 bg-amber-soft px-4 py-3 text-[13px] font-semibold text-amber">
+            You&apos;ve reached your limit of 5 active trips. Complete a trip
+            (or wait for its end date) to free a slot.
+          </p>
+        )
+      ) : null}
 
       <div className="flex items-center justify-end gap-3 pt-1">
         <Button type="submit" size="lg" disabled={pending}>

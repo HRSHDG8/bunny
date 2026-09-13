@@ -22,6 +22,13 @@ export interface TripMember {
   joined_at: string;
 }
 
+export interface TripPerson {
+  user_id: string;
+  full_name: string;
+  email: string | null;
+  is_owner: boolean;
+}
+
 export interface TripPreview {
   title: string;
   destination: string;
@@ -32,6 +39,7 @@ export interface TripPreview {
 export interface Flight {
   id: string;
   trip_id: string;
+  traveler_id: string | null;
   airline: string | null;
   flight_number: string | null;
   departure_place: string | null;
@@ -50,6 +58,7 @@ export interface Flight {
 export interface Rental {
   id: string;
   trip_id: string;
+  driver_ids: string[];
   company: string | null;
   booking_ref: string | null;
   car_model: string | null;

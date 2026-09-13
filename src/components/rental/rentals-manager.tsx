@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Car, Plus } from "lucide-react";
-import type { Rental } from "@/lib/types";
+import type { Rental, TripPerson } from "@/lib/types";
 import { deleteRental } from "@/lib/actions/rentals";
 import { RentalForm } from "@/components/rental/rental-form";
 import { RentalCard } from "@/components/rental/rental-card";
@@ -11,9 +11,13 @@ import { Button, EmptyState, Modal } from "@/components/ui";
 export function RentalsManager({
   tripId,
   rentals,
+  people,
+  locked = false,
 }: {
   tripId: string;
   rentals: Rental[];
+  people: TripPerson[];
+  locked?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Rental | null>(null);
@@ -33,9 +37,11 @@ export function RentalsManager({
             From booking to the number plate on the key fob.
           </p>
         </div>
-        <Button onClick={() => { setEditing(null); setOpen(true); }}>
-          <Plus className="h-4 w-4" /> Add rental
-        </Button>
+        {!locked ? (
+          <Button onClick={() => { setEditing(null); setOpen(true); }}>
+            <Plus className="h-4 w-4" /> Add rental
+          </Button>
+        ) : null}
       </div>
 
       {rentals.length === 0 ? (
@@ -44,9 +50,11 @@ export function RentalsManager({
           title="No rental car yet"
           body="Save the company, pickup and drop-off details - and jot the plate number down when you pick it up."
           action={
-            <Button variant="outline" onClick={() => { setEditing(null); setOpen(true); }}>
-              <Plus className="h-4 w-4" /> Add a rental
-            </Button>
+            !locked ? (
+              <Button variant="outline" onClick={() => { setEditing(null); setOpen(true); }}>
+                <Plus className="h-4 w-4" /> Add a rental
+              </Button>
+            ) : undefined
           }
         />
       ) : (
@@ -55,6 +63,8 @@ export function RentalsManager({
             <RentalCard
               key={r.id}
               rental={r}
+              people={people}
+              locked={locked}
               onEdit={() => { setEditing(r); setOpen(true); }}
               onDelete={() => handleDelete(r)}
             />
@@ -70,6 +80,7 @@ export function RentalsManager({
         <RentalForm
           tripId={tripId}
           rental={editing ?? undefined}
+          people={people}
           onSaved={() => setOpen(false)}
         />
       </Modal>

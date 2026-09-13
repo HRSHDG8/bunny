@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import type { PostgrestError } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { apiError } from "@/lib/supabase/errors";
 import type { ArrivalMethod } from "@/lib/types";
 
 export interface TripInput {
@@ -21,6 +23,21 @@ function validate(input: TripInput) {
     throw new Error("Pick start and end dates.");
   if (input.start_date > input.end_date)
     throw new Error("The end date can't be before the start date.");
+}
+
+const ACTIVE_TRIP_LIMIT = 5;
+const QUOTA_MSG =
+  "You can have up to 5 active trips at once. A trip frees its slot once its end date passes.";
+const LOCKED_MSG =
+  "This trip has been completed and is now locked - it can't be changed.";
+
+function lockError(error: PostgrestError, fallback: string) {
+  if (/up to 5 active trips/i.test(error.message)) return new Error(QUOTA_MSG);
+  if (/completed and is now locked/i.test(error.message))
+    return new Error(LOCKED_MSG);
+  if (/already ended and can't be joined/i.test(error.message))
+    return new Error("This trip has already ended and can't be joined.");
+  return apiError(fallback, error);
 }
 
 function tripPath(id: string) {
@@ -65,24 +82,41 @@ export async function createTrip(input: TripInput) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data, error } = await supabase
+  const today = new Date().toISOString().slice(0, 10);
+  const { count, error: countError } = await supabase
     .from("trips")
-    .insert({
-      title: input.title.trim(),
-      destination: input.destination.trim(),
-      start_date: input.start_date,
-      end_date: input.end_date,
-      arrival_method: input.arrival_method || null,
-      arrival_notes: input.arrival_notes?.trim() || null,
-      user_id: user.id,
-      share_token: crypto.randomUUID(),
-    })
-    .select()
-    .single();
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .gte("end_date", today);
+  if (!countError && (count ?? 0) >= ACTIVE_TRIP_LIMIT)
+    throw new Error(QUOTA_MSG);
 
-  if (error) throw new Error("Couldn't create the trip. Please try again.");
+  const shareToken = crypto.randomUUID();
+  const { error } = await supabase.from("trips").insert({
+    title: input.title.trim(),
+    destination: input.destination.trim(),
+    start_date: input.start_date,
+    end_date: input.end_date,
+    arrival_method: input.arrival_method || null,
+    arrival_notes: input.arrival_notes?.trim() || null,
+    user_id: user.id,
+    share_token: shareToken,
+  });
+  if (error) throw lockError(error, "Couldn't create the trip. Please try again.");
+
+  const { data: trip, error: readError } = await supabase
+    .from("trips")
+    .select("id")
+    .eq("share_token", shareToken)
+    .single();
+  if (readError || !trip)
+    throw apiError(
+      "Couldn't create the trip. Please try again.",
+      readError ?? null,
+    );
+
   revalidatePath("/dashboard");
-  redirect(tripPath(data.id));
+  redirect(tripPath(trip.id));
 }
 
 export async function updateTrip(id: string, input: TripInput) {
@@ -99,7 +133,7 @@ export async function updateTrip(id: string, input: TripInput) {
       arrival_notes: input.arrival_notes?.trim() || null,
     })
     .eq("id", id);
-  if (error) throw new Error("Couldn't save the trip.");
+  if (error) throw lockError(error, "Couldn't save the trip.");
   revalidatePath(tripPath(id));
   revalidatePath("/dashboard");
 }
@@ -107,7 +141,7 @@ export async function updateTrip(id: string, input: TripInput) {
 export async function deleteTrip(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("trips").delete().eq("id", id);
-  if (error) throw new Error("Couldn't delete the trip.");
+  if (error) throw lockError(error, "Couldn't delete the trip.");
   revalidatePath("/dashboard");
   redirect("/dashboard");
 }
@@ -126,7 +160,7 @@ export async function enableTripSharing(id: string) {
       .from("trips")
       .update({ share_token: crypto.randomUUID() })
       .eq("id", id);
-    if (error) throw new Error("Couldn't turn on sharing for this trip.");
+    if (error) throw lockError(error, "Couldn't turn on sharing for this trip.");
   }
   revalidatePath(tripPath(id));
 }
@@ -138,7 +172,7 @@ export async function revokeTripSharing(id: string) {
     .from("trips")
     .update({ share_token: null, share_emails: [] })
     .eq("id", id);
-  if (error) throw new Error("Couldn't turn off sharing for this trip.");
+  if (error) throw lockError(error, "Couldn't turn off sharing for this trip.");
   revalidatePath(tripPath(id));
 }
 
@@ -149,7 +183,7 @@ export async function setTripSharingEmails(id: string, raw: string) {
     .from("trips")
     .update({ share_emails: parseShareEmails(raw) })
     .eq("id", id);
-  if (error) throw new Error("Couldn't save the guest list for this trip.");
+  if (error) throw lockError(error, "Couldn't save the guest list for this trip.");
   revalidatePath(tripPath(id));
 }
 
@@ -174,7 +208,9 @@ export async function joinTripByToken(token: string) {
       );
     if (/Sign in to join/i.test(hint))
       throw new Error("Sign in to join this trip.");
-    throw new Error("This invite link is invalid or has been revoked.");
+    if (/already ended/i.test(hint))
+      throw new Error("This trip has already ended and can't be joined.");
+    throw apiError("This invite link is invalid or has been revoked.", error);
   }
 
   revalidatePath(`/trips/${tripId}`);

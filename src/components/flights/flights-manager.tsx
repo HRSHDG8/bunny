@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Plane, Plus } from "lucide-react";
-import type { Flight } from "@/lib/types";
+import type { Flight, TripPerson } from "@/lib/types";
 import { deleteFlight } from "@/lib/actions/flights";
 import { FlightForm } from "@/components/flights/flight-form";
 import { FlightCard } from "@/components/flights/flight-card";
@@ -11,9 +11,13 @@ import { Button, EmptyState, Modal } from "@/components/ui";
 export function FlightsManager({
   tripId,
   flights,
+  people,
+  locked = false,
 }: {
   tripId: string;
   flights: Flight[];
+  people: TripPerson[];
+  locked?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Flight | null>(null);
@@ -41,9 +45,11 @@ export function FlightsManager({
             Boarding-pass style details, all in one place.
           </p>
         </div>
-        <Button onClick={openNew}>
-          <Plus className="h-4 w-4" /> Add flight
-        </Button>
+        {!locked ? (
+          <Button onClick={openNew}>
+            <Plus className="h-4 w-4" /> Add flight
+          </Button>
+        ) : null}
       </div>
 
       {flights.length === 0 ? (
@@ -52,9 +58,11 @@ export function FlightsManager({
           title="No flights yet"
           body="Add your outbound and return flights - airline, flight number, times, and booking reference."
           action={
-            <Button onClick={openNew} variant="outline">
-              <Plus className="h-4 w-4" /> Add your first flight
-            </Button>
+            !locked ? (
+              <Button onClick={openNew} variant="outline">
+                <Plus className="h-4 w-4" /> Add your first flight
+              </Button>
+            ) : undefined
           }
         />
       ) : (
@@ -63,6 +71,8 @@ export function FlightsManager({
             <FlightCard
               key={f.id}
               flight={f}
+              people={people}
+              locked={locked}
               onEdit={() => openEdit(f)}
               onDelete={() => handleDelete(f)}
             />
@@ -78,6 +88,7 @@ export function FlightsManager({
         <FlightForm
           tripId={tripId}
           flight={editing ?? undefined}
+          people={people}
           onSaved={() => setOpen(false)}
         />
       </Modal>

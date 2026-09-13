@@ -3,8 +3,8 @@
 import React from "react";
 import { Loader2 } from "lucide-react";
 import { createFlight, updateFlight } from "@/lib/actions/flights";
-import type { Flight } from "@/lib/types";
-import { Button, Field, Input, Textarea } from "@/components/ui";
+import type { Flight, TripPerson } from "@/lib/types";
+import { Button, Field, Input, Select, Textarea } from "@/components/ui";
 
 function toLocal(dt: string | null) {
   if (!dt) return "";
@@ -16,10 +16,12 @@ function toLocal(dt: string | null) {
 export function FlightForm({
   tripId,
   flight,
+  people,
   onSaved,
 }: {
   tripId: string;
   flight?: Flight;
+  people: TripPerson[];
   onSaved?: () => void;
 }) {
   const [error, setError] = React.useState<string | null>(null);
@@ -29,6 +31,7 @@ export function FlightForm({
     e.preventDefault();
     const data = new FormData(e.currentTarget);
     const input = {
+      traveler_id: String(data.get("traveler_id") ?? "").trim(),
       airline: String(data.get("airline") ?? "").trim(),
       flight_number: String(data.get("flight_number") ?? "").trim(),
       departure_place: String(data.get("departure_place") ?? "").trim(),
@@ -64,6 +67,17 @@ export function FlightForm({
           {error}
         </div>
       ) : null}
+
+      <Field label="Traveler" hint="Each traveler gets their own flight legs. Pick one, or leave as whole trip.">
+        <Select name="traveler_id" defaultValue={flight?.traveler_id ?? ""}>
+          <option value="">Whole trip (everyone)</option>
+          {people.map((p) => (
+            <option key={p.user_id} value={p.user_id}>
+              {p.full_name}
+            </option>
+          ))}
+        </Select>
+      </Field>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Field label="Airline">

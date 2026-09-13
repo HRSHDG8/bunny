@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CalendarDays, Car, MapPin, Plane } from "lucide-react";
 import { format } from "date-fns";
 import type { Trip } from "@/lib/types";
-import { dayCount } from "@/lib/data";
+import { dayCount, isTripCompleted } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 export function TripCard({
@@ -19,6 +19,7 @@ export function TripCard({
   const start = new Date(`${trip.start_date}T00:00:00`);
   const end = new Date(`${trip.end_date}T00:00:00`);
   const days = dayCount(trip);
+  const completed = isTripCompleted(trip);
   const upcoming = new Date(`${trip.start_date}T00:00:00`) >= new Date();
   const isSingleDay = trip.start_date === trip.end_date;
 
@@ -31,7 +32,7 @@ export function TripCard({
       <div className="flex items-start justify-between gap-3 bg-gradient-to-br from-ink to-ink-soft p-5 pb-4 text-cream">
         <div>
           <p className="micro text-cream/50">
-            {upcoming ? "Upcoming" : "Finished"}
+            {completed ? "Completed" : upcoming ? "Upcoming" : "Live"}
           </p>
           <h3 className="mt-1 font-display text-[26px] font-semibold leading-tight tracking-tight">
             {trip.destination}
@@ -41,9 +42,13 @@ export function TripCard({
         <span
           className={cn(
             "stamp shrink-0 bg-transparent",
-            upcoming ? "text-amber" : "text-cream/40",
+            completed
+              ? "text-cream/40"
+              : upcoming
+                ? "text-amber"
+                : "text-sea-soft",
           )}
-          style={{ ["--stamp-rotate" as string]: `${upcoming ? -6 : 4}deg` }}
+          style={{ ["--stamp-rotate" as string]: `${completed ? 4 : upcoming ? -6 : -3}deg` }}
         >
           {days} {days === 1 ? "day" : "days"}
         </span>

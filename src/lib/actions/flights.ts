@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { apiError } from "@/lib/supabase/errors";
 
 export interface FlightInput {
+  traveler_id: string;
   airline: string;
   flight_number: string;
   departure_place: string;
@@ -23,10 +25,13 @@ function tripPaths(tripId: string) {
 
 export async function createFlight(tripId: string, input: FlightInput) {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const id = crypto.randomUUID();
+  const { error } = await supabase
     .from("flights")
     .insert({
+      id,
       trip_id: tripId,
+      traveler_id: input.traveler_id || null,
       airline: input.airline || null,
       flight_number: input.flight_number || null,
       departure_place: input.departure_place || null,
@@ -38,12 +43,10 @@ export async function createFlight(tripId: string, input: FlightInput) {
       booking_ref: input.booking_ref || null,
       seat: input.seat || null,
       notes: input.notes || null,
-    })
-    .select()
-    .single();
-  if (error) throw new Error("Couldn't save the flight.");
+    });
+  if (error) throw apiError("Couldn't save the flight.", error);
   tripPaths(tripId).forEach((p) => revalidatePath(p));
-  return data.id;
+  return id;
 }
 
 export async function updateFlight(id: string, tripId: string, input: FlightInput) {
@@ -51,6 +54,7 @@ export async function updateFlight(id: string, tripId: string, input: FlightInpu
   const { error } = await supabase
     .from("flights")
     .update({
+      traveler_id: input.traveler_id || null,
       airline: input.airline || null,
       flight_number: input.flight_number || null,
       departure_place: input.departure_place || null,
@@ -64,13 +68,13 @@ export async function updateFlight(id: string, tripId: string, input: FlightInpu
       notes: input.notes || null,
     })
     .eq("id", id);
-  if (error) throw new Error("Couldn't save the flight.");
+  if (error) throw apiError("Couldn't save the flight.", error);
   tripPaths(tripId).forEach((p) => revalidatePath(p));
 }
 
 export async function deleteFlight(id: string, tripId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("flights").delete().eq("id", id);
-  if (error) throw new Error("Couldn't delete the flight.");
+  if (error) throw apiError("Couldn't delete the flight.", error);
   tripPaths(tripId).forEach((p) => revalidatePath(p));
 }

@@ -1,7 +1,7 @@
 import { format, parseISO } from "date-fns";
 import { Pencil, Plane, Trash2 } from "lucide-react";
-import type { Flight } from "@/lib/types";
-import { IconButton } from "@/components/ui";
+import type { Flight, TripPerson } from "@/lib/types";
+import { Badge, IconButton } from "@/components/ui";
 
 function fmtTime(dt: string | null) {
   if (!dt) return "TBD";
@@ -10,15 +10,22 @@ function fmtTime(dt: string | null) {
 
 export function FlightCard({
   flight,
+  people,
+  locked = false,
   onEdit,
   onDelete,
 }: {
   flight: Flight;
+  people: TripPerson[];
+  locked?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
 }) {
   const dep = flight.departure_code || flight.departure_place?.slice(0, 6) || "-";
   const arr = flight.arrival_code || flight.arrival_place?.slice(0, 6) || "-";
+  const traveler = flight.traveler_id
+    ? people.find((p) => p.user_id === flight.traveler_id)
+    : null;
 
   return (
     <article className="ticket overflow-visible rounded-2xl">
@@ -31,14 +38,23 @@ export function FlightCard({
               <p className="mt-0.5 font-display text-2xl font-semibold tracking-tight text-ink">
                 {flight.flight_number || "-"}
               </p>
+              {flight.traveler_id ? (
+                <Badge tone="sea" className="mt-1">
+                  {traveler?.full_name ?? "Traveler"}
+                </Badge>
+              ) : (
+                <Badge tone="amber" className="mt-1">
+                  Whole trip
+                </Badge>
+              )}
             </div>
             <div className="flex items-center gap-1">
-              {onEdit ? (
+              {!locked && onEdit ? (
                 <IconButton label="Edit flight" onClick={onEdit}>
                   <Pencil className="h-3.5 w-3.5" />
                 </IconButton>
               ) : null}
-              {onDelete ? (
+              {!locked && onDelete ? (
                 <IconButton label="Delete flight" onClick={onDelete} className="text-rust hover:bg-rust-soft">
                   <Trash2 className="h-3.5 w-3.5" />
                 </IconButton>
