@@ -86,6 +86,7 @@ export function FlightsManager({
         title={editing ? "Edit flight" : "Add a flight"}
       >
         <FlightForm
+          key={editing?.id ?? "new"}
           tripId={tripId}
           flight={editing ?? undefined}
           people={people}

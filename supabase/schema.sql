@@ -60,7 +60,6 @@ create table if not exists public.flights (
   arrival_code     text,
   arrival_time     timestamptz,
   booking_ref      text,
-  seat             text,
   notes            text,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
@@ -68,14 +67,65 @@ create table if not exists public.flights (
 
 create index if not exists flights_trip_id_idx on public.flights(trip_id);
 
--- each flight can be assigned to one traveler; NULL = applies to the whole trip
-alter table public.flights add column if not exists traveler_id uuid references auth.users(id) on delete set null;
-create index if not exists flights_traveler_idx on public.flights(traveler_id);
+-- People travel on a flight via flight_passengers (each with their own
+-- seat), not a traveler_id column. A flight with no passengers applies
+-- to the whole trip. Clean up the old single-traveler columns.
+drop index if exists flights_traveler_idx;
+alter table public.flights drop column if exists traveler_id;
+alter table public.flights drop column if exists seat;
 
 drop trigger if exists flights_updated_at on public.flights;
 create trigger flights_updated_at
   before update on public.flights
   for each row execute function public.set_updated_at();
+
+-- ── flight_passengers ──────────────────────────────────────────
+-- One flight leg, many people, each with their own seat. No rows =
+-- "whole trip". trip_id is denormalized from the parent flight so we
+-- can enforce "a person is on at most one flight per trip" with a
+-- plain unique index. A BEFORE trigger keeps it in sync automatically.
+create table if not exists public.flight_passengers (
+  flight_id  uuid not null references public.flights(id) on delete cascade,
+  trip_id    uuid not null references public.trips(id) on delete cascade,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  seat       text,
+  created_at timestamptz not null default now(),
+  primary key (flight_id, user_id)
+);
+
+-- upgrade a pre-existing passengers table (before trip_id existed)
+alter table public.flight_passengers add column if not exists trip_id uuid references public.trips(id) on delete cascade;
+
+create index if not exists flight_passengers_user_idx on public.flight_passengers(user_id);
+
+-- keep trip_id authoritative from the parent flight, never the client
+create or replace function public.flight_passenger_set_trip()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_trip_id uuid;
+begin
+  select f.trip_id into v_trip_id
+    from public.flights f
+   where f.id = new.flight_id;
+
+  if v_trip_id is null then
+    raise exception 'This flight does not exist.'
+      using errcode = 'check_violation';
+  end if;
+
+  new.trip_id := v_trip_id;
+  return new;
+end;
+$$;
+
+drop trigger if exists flight_passengers_set_trip on public.flight_passengers;
+create trigger flight_passengers_set_trip
+  before insert or update on public.flight_passengers
+  for each row execute function public.flight_passenger_set_trip();
 
 -- ── rentals ────────────────────────────────────────────────────
 create table if not exists public.rentals (
@@ -443,12 +493,18 @@ create trigger trip_members_no_edits_when_completed
   before insert or update or delete on public.trip_members
   for each row execute function public.prevent_child_edits_on_completed_trip();
 
+drop trigger if exists flight_passengers_no_edits_when_completed on public.flight_passengers;
+create trigger flight_passengers_no_edits_when_completed
+  before insert or update or delete on public.flight_passengers
+  for each row execute function public.prevent_child_edits_on_completed_trip();
+
 -- ═══════════════════════════════════════════════════════════════
 --  Row Level Security
 -- ═══════════════════════════════════════════════════════════════
 
 alter table public.trips             enable row level security;
 alter table public.flights           enable row level security;
+alter table public.flight_passengers enable row level security;
 alter table public.rentals           enable row level security;
 alter table public.itinerary_items   enable row level security;
 alter table public.trip_members      enable row level security;
@@ -493,6 +549,27 @@ create policy "flights_update_own" on public.flights
 
 drop policy if exists "flights_delete_own" on public.flights;
 create policy "flights_delete_own" on public.flights
+  for delete to authenticated
+  using ( public.is_trip_editor(trip_id) );
+
+-- ── flight_passengers: read for participants, change for editors ──
+drop policy if exists "flight_passengers_select_own" on public.flight_passengers;
+create policy "flight_passengers_select_own" on public.flight_passengers
+  for select to authenticated
+  using ( public.is_trip_participant(trip_id) );
+
+drop policy if exists "flight_passengers_insert_own" on public.flight_passengers;
+create policy "flight_passengers_insert_own" on public.flight_passengers
+  for insert to authenticated
+  with check ( public.is_trip_editor(trip_id) );
+
+drop policy if exists "flight_passengers_update_own" on public.flight_passengers;
+create policy "flight_passengers_update_own" on public.flight_passengers
+  for update to authenticated
+  using ( public.is_trip_editor(trip_id) );
+
+drop policy if exists "flight_passengers_delete_own" on public.flight_passengers;
+create policy "flight_passengers_delete_own" on public.flight_passengers
   for delete to authenticated
   using ( public.is_trip_editor(trip_id) );
 
@@ -568,6 +645,7 @@ grant usage on schema public to anon, authenticated;
 -- `authenticated`: full CRUD; RLS restricts rows to the caller's trips.
 grant select, insert, update, delete on table public.trips           to authenticated;
 grant select, insert, update, delete on table public.flights         to authenticated;
+grant select, insert, update, delete on table public.flight_passengers to authenticated;
 grant select, insert, update, delete on table public.rentals         to authenticated;
 grant select, insert, update, delete on table public.itinerary_items to authenticated;
 grant select, insert, update, delete on table public.trip_members    to authenticated;

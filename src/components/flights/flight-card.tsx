@@ -23,9 +23,8 @@ export function FlightCard({
 }) {
   const dep = flight.departure_code || flight.departure_place?.slice(0, 6) || "-";
   const arr = flight.arrival_code || flight.arrival_place?.slice(0, 6) || "-";
-  const traveler = flight.traveler_id
-    ? people.find((p) => p.user_id === flight.traveler_id)
-    : null;
+  const nameOf = (userId: string) =>
+    people.find((p) => p.user_id === userId)?.full_name ?? "Guest";
 
   return (
     <article className="ticket overflow-visible rounded-2xl">
@@ -38,10 +37,15 @@ export function FlightCard({
               <p className="mt-0.5 font-display text-2xl font-semibold tracking-tight text-ink">
                 {flight.flight_number || "-"}
               </p>
-              {flight.traveler_id ? (
-                <Badge tone="sea" className="mt-1">
-                  {traveler?.full_name ?? "Traveler"}
-                </Badge>
+              {flight.flight_passengers.length > 0 ? (
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {flight.flight_passengers.map((fp) => (
+                    <Badge key={fp.user_id} tone="sea">
+                      {nameOf(fp.user_id)}
+                      {fp.seat ? ` · ${fp.seat}` : ""}
+                    </Badge>
+                  ))}
+                </div>
               ) : (
                 <Badge tone="amber" className="mt-1">
                   Whole trip
@@ -87,9 +91,13 @@ export function FlightCard({
           <p className="mt-1 font-mono text-lg font-bold tracking-wider text-ink">
             {flight.booking_ref || "-"}
           </p>
-          <p className="micro mt-4 text-muted">Seat</p>
+          <p className="micro mt-4 text-muted">Seats</p>
           <p className="mt-1 font-mono text-lg font-bold tracking-wider text-ink">
-            {flight.seat || "-"}
+            {flight.flight_passengers.length > 0
+              ? flight.flight_passengers
+                  .map((fp) => fp.seat || "-")
+                  .join(" · ")
+              : "-"}
           </p>
           {flight.notes ? (
             <>

@@ -36,10 +36,17 @@ export interface TripPreview {
   end_date: string;
 }
 
+export interface FlightPassenger {
+  flight_id: string;
+  trip_id: string;
+  user_id: string;
+  seat: string | null;
+  created_at: string;
+}
+
 export interface Flight {
   id: string;
   trip_id: string;
-  traveler_id: string | null;
   airline: string | null;
   flight_number: string | null;
   departure_place: string | null;
@@ -49,8 +56,8 @@ export interface Flight {
   arrival_code: string | null;
   arrival_time: string | null;
   booking_ref: string | null;
-  seat: string | null;
   notes: string | null;
+  flight_passengers: FlightPassenger[];
   created_at: string;
   updated_at: string;
 }

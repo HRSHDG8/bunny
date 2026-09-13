@@ -104,7 +104,7 @@ export async function getFlights(tripId: string): Promise<Flight[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("flights")
-    .select("*")
+    .select("*, flight_passengers(*)")
     .eq("trip_id", tripId)
     .order("departure_time", { ascending: true });
   if (error) throw dataError("Couldn't load the flights", error);
