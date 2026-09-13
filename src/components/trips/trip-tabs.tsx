@@ -34,7 +34,7 @@ export function TripTabs({ tripId }: { tripId: string }) {
             className={cn(
               "inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-2 text-[13px] font-semibold transition-all",
               selected
-                ? "bg-ink text-white shadow-sm"
+                ? "bg-ink-solid text-white shadow-sm"
                 : "text-muted hover:bg-cream hover:text-ink",
             )}
           >

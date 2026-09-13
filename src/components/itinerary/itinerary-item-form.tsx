@@ -89,7 +89,7 @@ export function ItineraryItemForm({
       {place ? (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-sea/25 bg-sea-soft px-4 py-3">
           <div className="flex min-w-0 items-center gap-2.5">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sea text-white">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sea-solid text-white">
               <MapPin className="h-4 w-4" />
             </span>
             <div className="min-w-0">

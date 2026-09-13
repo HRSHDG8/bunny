@@ -29,24 +29,24 @@ export function TripCard({
       className="group relative block overflow-hidden rounded-2xl border border-line/70 bg-card shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-pop"
     >
       {/* destination ribbon */}
-      <div className="flex items-start justify-between gap-3 bg-gradient-to-br from-ink to-ink-soft p-5 pb-4 text-cream">
+      <div className="flex items-start justify-between gap-3 bg-gradient-to-br from-ink-solid to-ink-solid/70 p-5 pb-4 text-cream-solid">
         <div>
-          <p className="micro text-cream/50">
+          <p className="micro text-cream-solid/50">
             {completed ? "Completed" : upcoming ? "Upcoming" : "Live"}
           </p>
           <h3 className="mt-1 font-display text-[26px] font-semibold leading-tight tracking-tight">
             {trip.destination}
           </h3>
-          <p className="mt-0.5 text-[13px] text-cream/75">{trip.title}</p>
+          <p className="mt-0.5 text-[13px] text-cream-solid/75">{trip.title}</p>
         </div>
         <span
           className={cn(
             "stamp shrink-0 bg-transparent",
             completed
-              ? "text-cream/40"
+              ? "text-cream-solid/40"
               : upcoming
                 ? "text-amber"
-                : "text-sea-soft",
+                : "text-sea-soft-solid",
           )}
           style={{ ["--stamp-rotate" as string]: `${completed ? 4 : upcoming ? -6 : -3}deg` }}
         >

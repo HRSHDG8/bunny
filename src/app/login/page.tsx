@@ -15,12 +15,12 @@ export default async function LoginPage(
   return (
     <main className="grid flex-1 lg:grid-cols-2">
       {/* Brand panel */}
-      <div className="relative hidden overflow-hidden bg-sea-deep text-cream lg:flex lg:flex-col lg:justify-between lg:p-12">
+      <div className="relative hidden overflow-hidden bg-sea-solid text-cream-solid lg:flex lg:flex-col lg:justify-between lg:p-12">
         <div className="absolute inset-0 opacity-[0.07]">
           <div className="h-full w-full paper-texture" />
         </div>
         <div className="relative flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-cream/20">
+          <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-cream-solid/20">
             <Image
               src="/bunny logo white.jpeg"
               alt=""
@@ -36,7 +36,7 @@ export default async function LoginPage(
           <h1 className="max-w-md font-display text-5xl font-semibold leading-[1.05] tracking-tight">
             Every great trip starts with a plan.
           </h1>
-          <p className="mt-5 max-w-sm text-[15px] leading-relaxed text-cream/80">
+          <p className="mt-5 max-w-sm text-[15px] leading-relaxed text-cream-solid/80">
             Flights, rental cars, and a day-by-day itinerary - organized like
             a beautifully stamped passport, ready before your bags are packed.
             Inspired by my wife&apos;s love for planning and extreme attention
@@ -52,7 +52,7 @@ export default async function LoginPage(
             ].map(({ icon: Icon, text }) => (
               <div
                 key={text}
-                className="flex items-center gap-3 rounded-xl border border-cream/10 bg-cream/5 px-4 py-2.5 text-sm text-cream/90"
+                className="flex items-center gap-3 rounded-xl border border-cream-solid/10 bg-cream-solid/5 px-4 py-2.5 text-sm text-cream-solid/90"
               >
                 <Icon className="h-4 w-4 text-amber" />
                 {text}
@@ -61,7 +61,7 @@ export default async function LoginPage(
           </div>
         </div>
 
-        <p className="relative text-xs uppercase tracking-[0.22em] text-cream/50">
+        <p className="relative text-xs uppercase tracking-[0.22em] text-cream-solid/50">
           Plan. Pack. Go.
         </p>
       </div>

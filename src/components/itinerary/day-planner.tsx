@@ -100,21 +100,21 @@ export function DayPlanner({
                   className={cn(
                     "group shrink-0 rounded-2xl border px-4 py-2.5 text-left transition-all",
                     selected
-                      ? "border-transparent bg-sea-deep text-white shadow-[0_12px_24px_-12px_rgba(47,111,106,0.7)]"
+                      ? "border-transparent bg-sea-solid text-white shadow-[0_12px_24px_-12px_rgba(47,111,106,0.7)]"
                       : "border-line bg-card text-ink hover:border-sea/40 hover:bg-sea-soft/50",
                   )}
                 >
                   <span
                     className={cn(
                       "block text-[10px] font-bold uppercase tracking-[0.15em]",
-                      selected ? "text-sea-soft" : "text-muted",
+                      selected ? "text-white/70" : "text-muted",
                     )}
                   >
                     Day {d.dayNumber} · {weekday}
                   </span>
                   <span className="mt-0.5 block text-sm font-semibold">
                     {monthDay.trim()}{" "}
-                    <span className={cn("font-normal", selected ? "text-sea-soft" : "text-muted")}>
+                    <span className={cn("font-normal", selected ? "text-white/70" : "text-muted")}>
                       {d.date.split("-")[0]}
                     </span>
                   </span>

@@ -46,22 +46,22 @@ export default async function TripLayout({
       />
       <main className="mx-auto w-full max-w-5xl flex-1 px-5 pb-16 pt-8 sm:px-6">
         {/* Trip hero */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-ink via-ink to-sea-deep p-7 text-cream shadow-pop sm:p-9">
-          <div className="pointer-events-none absolute -right-10 -top-14 h-56 w-56 rounded-full bg-cream/5" />
-          <div className="pointer-events-none absolute -bottom-20 right-24 h-64 w-64 rounded-full border border-cream/10" />
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-ink-solid via-ink-solid to-sea-solid p-7 text-cream-solid shadow-pop sm:p-9">
+          <div className="pointer-events-none absolute -right-10 -top-14 h-56 w-56 rounded-full bg-cream-solid/5" />
+          <div className="pointer-events-none absolute -bottom-20 right-24 h-64 w-64 rounded-full border border-cream-solid/10" />
 
           <div className="relative flex flex-wrap items-start justify-between gap-6">
             <div>
-              <div className="flex items-center gap-2 text-cream/60">
+              <div className="flex items-center gap-2 text-cream-solid/60">
                 <MapPin className="h-4 w-4" />
                 <span className="micro">{days.length} days · {days[0]?.label ?? ""}</span>
               </div>
               <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
                 {trip.destination}
               </h1>
-              <p className="mt-1 text-[15px] text-cream/75">{trip.title}</p>
+              <p className="mt-1 text-[15px] text-cream-solid/75">{trip.title}</p>
 
-              <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-cream/85">
+              <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-cream-solid/85">
                 <span className="inline-flex items-center gap-2">
                   <CalendarDays className="h-4 w-4 text-amber" />
                   <span className="font-semibold">
@@ -69,14 +69,14 @@ export default async function TripLayout({
                   </span>
                 </span>
                 {completed ? (
-                  <span className="stamp bg-transparent text-cream/40">
+                  <span className="stamp bg-transparent text-cream-solid/40">
                     Completed
                   </span>
                 ) : null}
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 rounded-2xl border border-cream/15 bg-cream/5 p-1.5">
+            <div className="flex items-center gap-1.5 rounded-2xl border border-cream-solid/15 bg-cream-solid/5 p-1.5">
               {!completed && canManage ? <EditTripDialog trip={trip} /> : null}
               {!completed && isOwner ? (
                 <>
@@ -88,8 +88,8 @@ export default async function TripLayout({
           </div>
 
           {completed ? (
-            <div className="relative mt-5 flex items-center gap-2 rounded-2xl border border-cream/15 bg-cream/5 px-4 py-3 text-sm text-cream/80">
-              <span className="micro text-cream/50">Locked</span>
+            <div className="relative mt-5 flex items-center gap-2 rounded-2xl border border-cream-solid/15 bg-cream-solid/5 px-4 py-3 text-sm text-cream-solid/80">
+              <span className="micro text-cream-solid/50">Locked</span>
               This trip has ended and is now read-only - nothing can be edited
               or deleted.
             </div>

@@ -10,7 +10,7 @@ const btnBase =
 const btnVariants: Record<string, string> = {
   primary:
     "bg-rust text-white shadow-[0_10px_24px_-10px_rgba(195,85,42,0.7)] hover:bg-rust-deep",
-  secondary: "bg-ink text-white hover:bg-ink-soft",
+  secondary: "bg-ink-solid text-white hover:brightness-110",
   outline:
     "border border-line-strong bg-card text-ink hover:border-ink/30 hover:bg-cream/50",
   ghost: "text-ink-soft hover:bg-cream hover:text-ink",
@@ -153,7 +153,7 @@ export function Badge({
     sea: "bg-sea-soft text-sea-deep",
     rust: "bg-rust-soft text-rust-deep",
     amber: "bg-amber-soft text-amber",
-    ink: "bg-ink text-white",
+    ink: "bg-ink-solid text-white",
   };
   return (
     <span

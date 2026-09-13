@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* ── Brand palette: "Passport paper" ─────────────────────────── */
   --color-paper: #f9f4ea;
@@ -19,6 +21,13 @@
   --color-sea: #2f6f6a;
   --color-sea-deep: #22504d;
   --color-sea-soft: #dce8e4;
+
+  /* ── "Solid" surfaces that stay dark in both themes (white/cream
+     text sits on them) ─────────────────────────────────────────── */
+  --color-ink-solid: #21252e;
+  --color-cream-solid: #f1e8d6;
+  --color-sea-solid: #22504d;
+  --color-sea-soft-solid: #dce8e4;
 
   /* ── Typography ──────────────────────────────────────────────── */
   --font-sans: var(--font-inter);
@@ -62,7 +71,44 @@
   }
 }
 
+/* ── Dark theme ─────────────────────────────────────────────────
+   Utilities like bg-card/text-ink resolve to var(--color-*), so
+   overriding these variables under .dark flips the whole app. */
+:root.dark {
+  color-scheme: dark;
+
+  --color-paper: #15171b;
+  --color-cream: #1f2329;
+  --color-card: #1a1e24;
+  --color-ink: #eceff2;
+  --color-ink-soft: #a9b0b8;
+  --color-muted: #7e848d;
+  --color-line: #2a2f37;
+  --color-line-strong: #3b4149;
+
+  --color-rust: #d66a3e;
+  --color-rust-deep: #ee9a77;
+  --color-rust-soft: #3a251d;
+  --color-amber: #d3a44b;
+  --color-amber-soft: #3a3321;
+  --color-sea: #54a49b;
+  --color-sea-deep: #83c4bc;
+  --color-sea-soft: #1e302e;
+
+  --color-ink-solid: #262b33;
+  --color-cream-solid: #f1ead9;
+  --color-sea-solid: #1e4a47;
+  --color-sea-soft-solid: #dce8e4;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.5), 0 12px 28px -14px rgb(0 0 0 / 0.6);
+  --shadow-pop: 0 4px 12px rgb(0 0 0 / 0.55), 0 28px 60px -20px rgb(0 0 0 / 0.75);
+}
+
 @layer base {
+  html {
+    color-scheme: light;
+  }
+
   * {
     border-color: var(--color-line);
   }
@@ -94,8 +140,8 @@
 @layer components {
   .paper-texture {
     background-image:
-      radial-gradient(rgb(33 37 46 / 0.03) 1px, transparent 1px),
-      radial-gradient(rgb(33 37 46 / 0.025) 1px, transparent 1px);
+      radial-gradient(color-mix(in srgb, var(--color-ink) 3%, transparent) 1px, transparent 1px),
+      radial-gradient(color-mix(in srgb, var(--color-ink) 2.5%, transparent) 1px, transparent 1px);
     background-size: 22px 22px, 34px 34px;
     background-position: 0 0, 11px 11px;
   }

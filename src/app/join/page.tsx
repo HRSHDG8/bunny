@@ -34,15 +34,15 @@ export default async function JoinPage(props: PageProps<"/join">) {
       <main className="mx-auto w-full max-w-md flex-1 px-5 py-16 sm:px-6">
         {preview ? (
           <div className="overflow-hidden rounded-3xl border border-line/70 bg-card shadow-pop">
-            <div className="relative bg-gradient-to-br from-ink via-ink to-sea-deep p-7 text-cream">
-              <div className="pointer-events-none absolute -right-8 -top-10 h-40 w-40 rounded-full bg-cream/5" />
-              <p className="micro text-cream/60">Trip invite</p>
+            <div className="relative bg-gradient-to-br from-ink-solid via-ink-solid to-sea-solid p-7 text-cream-solid">
+              <div className="pointer-events-none absolute -right-8 -top-10 h-40 w-40 rounded-full bg-cream-solid/5" />
+              <p className="micro text-cream-solid/60">Trip invite</p>
               <h1 className="mt-1.5 flex items-center gap-2 font-display text-3xl font-semibold tracking-tight">
                 <MapPin className="h-6 w-6 text-amber" />
                 {preview.destination}
               </h1>
-              <p className="mt-1 text-[15px] text-cream/75">{preview.title}</p>
-              <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-cream/15 bg-cream/5 px-3 py-1 text-[13px] text-cream/85">
+              <p className="mt-1 text-[15px] text-cream-solid/75">{preview.title}</p>
+              <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-cream-solid/15 bg-cream-solid/5 px-3 py-1 text-[13px] text-cream-solid/85">
                 {format(new Date(`${preview.start_date}T00:00:00`), "MMM d, yyyy")}
                 {" - "}
                 {format(new Date(`${preview.end_date}T00:00:00`), "MMM d, yyyy")}

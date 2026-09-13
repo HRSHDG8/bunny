@@ -2,8 +2,11 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { LogOut, Moon, Sun } from "lucide-react";
 import { signOut } from "@/lib/actions/auth";
+import { cn } from "@/lib/utils";
+
+const emptySubscribe = () => () => {};
 
 function initials(name?: string | null) {
   if (!name) return "?";
@@ -27,6 +30,23 @@ export function UserMenu({
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
   const [copied, setCopied] = React.useState(false);
+  const [isDark, setIsDark] = React.useState(() =>
+    typeof document !== "undefined"
+      ? document.documentElement.classList.contains("dark")
+      : false,
+  );
+  const mounted = React.useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
+
+  function toggleTheme() {
+    const next = !isDark;
+    setIsDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem("bunny-theme", next ? "dark" : "light");
+  }
 
   React.useEffect(() => {
     function onDoc(e: MouseEvent) {
@@ -57,7 +77,7 @@ export function UserMenu({
         type="button"
         aria-label="Account menu"
         onClick={() => setOpen((o) => !o)}
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-sea-deep text-[13px] font-bold text-white ring-2 ring-sea-soft transition-transform hover:scale-105"
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-sea-solid text-[13px] font-bold text-white ring-2 ring-sea-soft transition-transform hover:scale-105"
       >
         {initials(name ?? email)}
       </button>
@@ -70,6 +90,37 @@ export function UserMenu({
             </p>
             <p className="truncate text-xs text-muted">{email}</p>
           </div>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="mt-1 flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm text-ink-soft transition-colors hover:bg-cream"
+          >
+            <span className="flex items-center gap-2">
+              {mounted ? (
+                isDark ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+              {mounted ? (isDark ? "Light mode" : "Dark mode") : "Theme"}
+            </span>
+            <span
+              className={cn(
+                "relative h-5 w-9 shrink-0 rounded-full transition-colors",
+                isDark ? "bg-sea-solid" : "bg-line-strong",
+              )}
+            >
+              <span
+                className={cn(
+                  "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all",
+                  isDark ? "left-[18px]" : "left-0.5",
+                )}
+              />
+            </span>
+          </button>
           <button
             type="button"
             onClick={() => {

@@ -87,7 +87,7 @@ export default async function Home() {
         >
           <Link
             href="/login?next=/trips/new"
-            className="inline-flex h-13 items-center gap-2 rounded-full bg-ink px-7 text-[15px] font-semibold text-white shadow-[0_16px_32px_-12px_rgba(33,37,46,0.55)] transition-all hover:-translate-y-0.5 hover:bg-ink-soft"
+            className="inline-flex h-13 items-center gap-2 rounded-full bg-ink-solid px-7 text-[15px] font-semibold text-white shadow-[0_16px_32px_-12px_rgba(33,37,46,0.55)] transition-all hover:-translate-y-0.5 hover:brightness-110"
           >
             <Calendar className="h-4.5 w-4.5" /> Plan your first trip
           </Link>

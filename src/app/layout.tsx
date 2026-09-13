@@ -33,9 +33,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       data-scroll-behavior="smooth"
+      suppressHydrationWarning
       className={`${inter.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="paper-texture flex min-h-full flex-col">
+        <script
+          async
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("bunny-theme");var d=t?t==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.classList.toggle("dark",d)}catch(e){}})();`,
+          }}
+        />
         {children}
         <Toaster
           position="bottom-right"
@@ -43,7 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             style: {
               borderRadius: "12px",
               fontFamily: "var(--font-sans)",
-              background: "var(--color-ink)",
+              background: "var(--color-ink-solid)",
               color: "#fff",
             },
           }}
