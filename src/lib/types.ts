@@ -51,10 +51,20 @@ export interface Flight {
   flight_number: string | null;
   departure_place: string | null;
   departure_code: string | null;
+  /** Wall clock at the departure airport (no zone). */
   departure_time: string | null;
+  /** IANA zone of the departure airport, e.g. "Europe/Lisbon". */
+  departure_tz: string | null;
+  /** True instant derived from departure_time + departure_tz. */
+  departure_at: string | null;
   arrival_place: string | null;
   arrival_code: string | null;
+  /** Wall clock at the arrival airport (no zone). */
   arrival_time: string | null;
+  arrival_tz: string | null;
+  arrival_at: string | null;
+  /** Shared by all legs of one connecting journey; null = standalone. */
+  journey_id: string | null;
   booking_ref: string | null;
   notes: string | null;
   flight_passengers: FlightPassenger[];

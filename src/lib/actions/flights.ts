@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { apiError } from "@/lib/supabase/errors";
+import { timezoneForCode } from "@/lib/airports";
 
 export interface FlightPassengerInput {
   user_id: string;
@@ -14,10 +15,14 @@ export interface FlightInput {
   flight_number: string;
   departure_place: string;
   departure_code: string;
+  /** Naive wall clock "yyyy-MM-ddTHH:mm" (local to the departure airport). */
   departure_time: string;
   arrival_place: string;
   arrival_code: string;
+  /** Naive wall clock "yyyy-MM-ddTHH:mm" (local to the arrival airport). */
   arrival_time: string;
+  /** Flight id whose journey this leg joins; null = standalone. */
+  journey_id: string | null;
   booking_ref: string;
   notes: string;
   passengers: FlightPassengerInput[];
@@ -38,9 +43,38 @@ function passengerRows(
   }));
 }
 
+/** Zone is resolved server-side from the airport code; unknown code → null. */
+function tzColumns(input: FlightInput) {
+  return {
+    departure_tz: timezoneForCode(input.departure_code),
+    arrival_tz: timezoneForCode(input.arrival_code),
+  };
+}
+
+/**
+ * The form submits the id of a flight to connect to. Group this leg with
+ * that flight's journey (its journey_id, or the flight itself if it has
+ * none). Only accepted within the same trip; anything else → standalone.
+ */
+async function resolveJourneyId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  tripId: string,
+  journeyWithFlightId: string | null,
+): Promise<string | null> {
+  if (!journeyWithFlightId) return null;
+  const { data, error } = await supabase
+    .from("flights")
+    .select("id, trip_id, journey_id")
+    .eq("id", journeyWithFlightId)
+    .maybeSingle();
+  if (error || !data || data.trip_id !== tripId) return null;
+  return data.journey_id ?? data.id;
+}
+
 export async function createFlight(tripId: string, input: FlightInput) {
   const supabase = await createClient();
   const id = crypto.randomUUID();
+  const journeyId = await resolveJourneyId(supabase, tripId, input.journey_id);
 
   const { error } = await supabase.from("flights").insert({
     id,
@@ -53,8 +87,10 @@ export async function createFlight(tripId: string, input: FlightInput) {
     arrival_place: input.arrival_place || null,
     arrival_code: input.arrival_code || null,
     arrival_time: input.arrival_time || null,
+    journey_id: journeyId,
     booking_ref: input.booking_ref || null,
     notes: input.notes || null,
+    ...tzColumns(input),
   });
   if (error) throw apiError("Couldn't save the flight.", error);
 
@@ -71,6 +107,7 @@ export async function createFlight(tripId: string, input: FlightInput) {
 
 export async function updateFlight(id: string, tripId: string, input: FlightInput) {
   const supabase = await createClient();
+  const journeyId = await resolveJourneyId(supabase, tripId, input.journey_id);
 
   const { error } = await supabase
     .from("flights")
@@ -83,8 +120,10 @@ export async function updateFlight(id: string, tripId: string, input: FlightInpu
       arrival_place: input.arrival_place || null,
       arrival_code: input.arrival_code || null,
       arrival_time: input.arrival_time || null,
+      journey_id: journeyId,
       booking_ref: input.booking_ref || null,
       notes: input.notes || null,
+      ...tzColumns(input),
     })
     .eq("id", id);
   if (error) throw apiError("Couldn't save the flight.", error);

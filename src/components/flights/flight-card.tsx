@@ -1,11 +1,28 @@
 import { format, parseISO } from "date-fns";
 import { Pencil, Plane, Trash2 } from "lucide-react";
+import { fmtDuration, zoneLabel } from "@/lib/airports";
 import type { Flight, TripPerson } from "@/lib/types";
 import { Badge, IconButton } from "@/components/ui";
 
 function fmtTime(dt: string | null) {
   if (!dt) return "TBD";
+  // Stored times are naive wall clocks at the airport, so formatting
+  // without a zone renders exactly what the traveler intended.
   return format(parseISO(dt), "EEE, MMM d · HH:mm");
+}
+
+function tzSuffix(tz: string | null, at: string | null) {
+  if (!tz) return "";
+  const label = zoneLabel(tz, at ? new Date(at) : new Date());
+  return label ? ` ${label}` : "";
+}
+
+function legDuration(flight: Flight) {
+  if (!flight.departure_at || !flight.arrival_at) return null;
+  const ms =
+    new Date(flight.arrival_at).getTime() -
+    new Date(flight.departure_at).getTime();
+  return ms > 0 ? fmtDuration(ms) : null;
 }
 
 export function FlightCard({
@@ -23,6 +40,7 @@ export function FlightCard({
 }) {
   const dep = flight.departure_code || flight.departure_place?.slice(0, 6) || "-";
   const arr = flight.arrival_code || flight.arrival_place?.slice(0, 6) || "-";
+  const duration = legDuration(flight);
   const nameOf = (userId: string) =>
     people.find((p) => p.user_id === userId)?.full_name ?? "Guest";
 
@@ -70,17 +88,28 @@ export function FlightCard({
             <div className="flex-1">
               <p className="font-display text-2xl font-semibold text-ink sm:text-3xl">{dep}</p>
               <p className="text-[11px] font-medium text-muted">{flight.departure_place}</p>
-              <p className="mt-0.5 text-[12px] font-semibold text-sea">{fmtTime(flight.departure_time)}</p>
+              <p className="mt-0.5 text-[12px] font-semibold text-sea">
+                {fmtTime(flight.departure_time)}
+                {tzSuffix(flight.departure_tz, flight.departure_at)}
+              </p>
             </div>
-            <div className="flex flex-1 items-center gap-1.5">
+            <div className="flex flex-1 flex-col items-center gap-1.5">
               <span className="h-px flex-1 border-t border-dashed border-line-strong" />
-              <Plane className="h-4 w-4 rotate-90 text-rust" />
+              <span className="flex items-center gap-1.5">
+                {duration ? (
+                  <span className="text-[10px] font-semibold text-muted">{duration}</span>
+                ) : null}
+                <Plane className="h-4 w-4 rotate-90 text-rust" />
+              </span>
               <span className="h-px flex-1 border-t border-dashed border-line-strong" />
             </div>
             <div className="flex-1 text-right">
               <p className="font-display text-2xl font-semibold text-ink sm:text-3xl">{arr}</p>
               <p className="text-[11px] font-medium text-muted">{flight.arrival_place}</p>
-              <p className="mt-0.5 text-[12px] font-semibold text-rust">{fmtTime(flight.arrival_time)}</p>
+              <p className="mt-0.5 text-[12px] font-semibold text-rust">
+                {fmtTime(flight.arrival_time)}
+                {tzSuffix(flight.arrival_tz, flight.arrival_at)}
+              </p>
             </div>
           </div>
         </div>

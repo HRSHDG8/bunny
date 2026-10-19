@@ -106,6 +106,9 @@ export async function getFlights(tripId: string): Promise<Flight[]> {
     .from("flights")
     .select("*, flight_passengers(*)")
     .eq("trip_id", tripId)
+    // True instants first (zones known); naive-only rows fall back to
+    // their wall clock so they still sort sanely.
+    .order("departure_at", { ascending: true, nullsFirst: false })
     .order("departure_time", { ascending: true });
   if (error) throw dataError("Couldn't load the flights", error);
   return data;

@@ -3,24 +3,76 @@
 import React from "react";
 import { Loader2, UsersRound } from "lucide-react";
 import { createFlight, updateFlight } from "@/lib/actions/flights";
+import { airportForCode, airportList } from "@/lib/airports";
 import type { Flight, TripPerson } from "@/lib/types";
 import { Button, Field, Input, Textarea } from "@/components/ui";
 
-function toLocal(dt: string | null) {
+/** Reformat a stored naive wall clock ("…THH:mm:ss") for datetime-local. */
+function storedToInput(dt: string | null) {
   if (!dt) return "";
-  const d = new Date(dt);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return dt.length >= 16 ? dt.slice(0, 16) : dt;
+}
+
+function tzHint(code: string): string {
+  const a = airportForCode(code);
+  if (!a) return code.trim() ? "Unknown airport — time saved without a time zone" : "";
+  return `${a.city ? `${a.city} · ` : ""}${a.tz}`;
+}
+
+function CodeField({
+  name,
+  label,
+  placeholder,
+  defaultValue,
+}: {
+  name: string;
+  label: string;
+  placeholder: string;
+  defaultValue: string;
+}) {
+  const [code, setCode] = React.useState(defaultValue);
+  // The full airport list is thousands of options — only mount them once
+  // the user actually engages with the field.
+  const [active, setActive] = React.useState(false);
+  const hint = tzHint(code);
+  return (
+    <Field label={label}>
+      <Input
+        name={name}
+        placeholder={placeholder}
+        maxLength={4}
+        list={active ? `${name}-list` : undefined}
+        defaultValue={defaultValue}
+        onFocus={() => setActive(true)}
+        onChange={(e) => setCode(e.target.value)}
+      />
+      {hint ? (
+        <p className="mt-1 text-[11px] font-medium text-muted">{hint}</p>
+      ) : null}
+      {active ? (
+        <datalist id={`${name}-list`}>
+          {airportList.map((a) => (
+            <option key={a.code} value={a.code}>
+              {a.city ? `${a.city} — ` : ""}
+              {a.tz}
+            </option>
+          ))}
+        </datalist>
+      ) : null}
+    </Field>
+  );
 }
 
 export function FlightForm({
   tripId,
   flight,
+  flights = [],
   people,
   onSaved,
 }: {
   tripId: string;
   flight?: Flight;
+  flights?: Flight[];
   people: TripPerson[];
   onSaved?: () => void;
 }) {
@@ -37,6 +89,16 @@ export function FlightForm({
   const [seats, setSeats] = React.useState<Map<string, string>>(initial);
   const [error, setError] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
+
+  // Flights this one can connect to (exclude itself and its own journey's
+  // legs — connecting to a sibling makes no sense).
+  const otherFlights = React.useMemo(
+    () =>
+      flights.filter(
+        (f) => f.id !== flight?.id && f.journey_id !== flight?.journey_id,
+      ),
+    [flights, flight],
+  );
 
   function toggle(userId: string) {
     setSeats((prev) => {
@@ -73,11 +135,12 @@ export function FlightForm({
       airline: String(data.get("airline") ?? "").trim(),
       flight_number: String(data.get("flight_number") ?? "").trim(),
       departure_place: String(data.get("departure_place") ?? "").trim(),
-      departure_code: String(data.get("departure_code") ?? "").trim(),
+      departure_code: String(data.get("departure_code") ?? "").trim().toUpperCase(),
       departure_time: String(data.get("departure_time") ?? "").trim(),
       arrival_place: String(data.get("arrival_place") ?? "").trim(),
-      arrival_code: String(data.get("arrival_code") ?? "").trim(),
+      arrival_code: String(data.get("arrival_code") ?? "").trim().toUpperCase(),
       arrival_time: String(data.get("arrival_time") ?? "").trim(),
+      journey_id: String(data.get("journey_id") ?? "").trim() || null,
       booking_ref: String(data.get("booking_ref") ?? "").trim(),
       notes: String(data.get("notes") ?? "").trim(),
       passengers,
@@ -170,11 +233,14 @@ export function FlightForm({
               <Input name="departure_place" placeholder="e.g. Lisbon Airport (LIS)" defaultValue={flight?.departure_place ?? ""} />
             </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Code">
-                <Input name="departure_code" placeholder="LIS" maxLength={4} defaultValue={flight?.departure_code ?? ""} />
-              </Field>
-              <Field label="Time">
-                <Input name="departure_time" type="datetime-local" defaultValue={toLocal(flight?.departure_time ?? null)} />
+              <CodeField
+                name="departure_code"
+                label="Code"
+                placeholder="LIS"
+                defaultValue={flight?.departure_code ?? ""}
+              />
+              <Field label="Time" hint="Local at the airport">
+                <Input name="departure_time" type="datetime-local" defaultValue={storedToInput(flight?.departure_time ?? null)} />
               </Field>
             </div>
           </div>
@@ -187,16 +253,46 @@ export function FlightForm({
               <Input name="arrival_place" placeholder="e.g. Rome Fiumicino (FCO)" defaultValue={flight?.arrival_place ?? ""} />
             </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Code">
-                <Input name="arrival_code" placeholder="FCO" maxLength={4} defaultValue={flight?.arrival_code ?? ""} />
-              </Field>
-              <Field label="Time">
-                <Input name="arrival_time" type="datetime-local" defaultValue={toLocal(flight?.arrival_time ?? null)} />
+              <CodeField
+                name="arrival_code"
+                label="Code"
+                placeholder="FCO"
+                defaultValue={flight?.arrival_code ?? ""}
+              />
+              <Field label="Time" hint="Local at the airport">
+                <Input name="arrival_time" type="datetime-local" defaultValue={storedToInput(flight?.arrival_time ?? null)} />
               </Field>
             </div>
           </div>
         </div>
       </div>
+
+      {otherFlights.length > 0 ? (
+        <Field
+          label="Journey"
+          hint="Connecting flights share a journey — layovers show up between legs."
+        >
+          <select
+            name="journey_id"
+            defaultValue={flight?.journey_id ?? ""}
+            className="w-full rounded-xl border border-line bg-white/60 px-3 py-2.5 text-sm text-ink"
+          >
+            <option value="">Standalone flight</option>
+            {flight?.journey_id ? (
+              <option value={flight.journey_id}>Same journey as before</option>
+            ) : null}
+            {otherFlights.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.flight_number || f.airline || "Flight"} ·{" "}
+                {f.departure_code || "?"} → {f.arrival_code || "?"}
+                {f.departure_time
+                  ? ` on ${f.departure_time.slice(0, 10)}`
+                  : ""}
+              </option>
+            ))}
+          </select>
+        </Field>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Booking reference" hint="Confirmation code">

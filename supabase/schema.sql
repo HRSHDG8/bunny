@@ -48,6 +48,9 @@ create trigger trips_updated_at
   for each row execute function public.set_updated_at();
 
 -- ── flights ────────────────────────────────────────────────────
+-- Times are naive wall clocks at the departure/arrival airport;
+-- the *_tz columns hold the airport's IANA zone (see upgrade note
+-- below).
 create table if not exists public.flights (
   id               uuid primary key default gen_random_uuid(),
   trip_id          uuid not null references public.trips(id) on delete cascade,
@@ -55,10 +58,10 @@ create table if not exists public.flights (
   flight_number    text,
   departure_place  text,
   departure_code   text,
-  departure_time   timestamptz,
+  departure_time   timestamp,
   arrival_place    text,
   arrival_code     text,
-  arrival_time     timestamptz,
+  arrival_time     timestamp,
   booking_ref      text,
   notes            text,
   created_at       timestamptz not null default now(),
@@ -73,6 +76,39 @@ create index if not exists flights_trip_id_idx on public.flights(trip_id);
 drop index if exists flights_traveler_idx;
 alter table public.flights drop column if exists traveler_id;
 alter table public.flights drop column if exists seat;
+
+-- Times are the wall clock at the departure/arrival airport, plus the
+-- airport's IANA zone. departure_at/arrival_at are the true instants
+-- (null when the zone is unknown) used for sorting and durations.
+-- Legacy rows: the old timestamptz captured the naive input string as
+-- UTC, so converting back with `at time zone 'UTC'` recovers the exact
+-- wall clock the user typed. Their zone is unknowable → stays null.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'flights'
+      and column_name = 'departure_time'
+      and data_type = 'timestamp with time zone'
+  ) then
+    alter table public.flights
+      alter column departure_time type timestamp using (departure_time at time zone 'UTC'),
+      alter column arrival_time   type timestamp using (arrival_time   at time zone 'UTC');
+  end if;
+end $$;
+
+alter table public.flights add column if not exists departure_tz text;
+alter table public.flights add column if not exists arrival_tz   text;
+
+-- Legs of one connecting journey share a journey_id (the first leg's
+-- own id). Null = standalone flight.
+alter table public.flights add column if not exists journey_id uuid references public.flights(id) on delete set null;
+create index if not exists flights_journey_id_idx on public.flights(journey_id);
+
+alter table public.flights add column if not exists departure_at timestamptz
+  generated always as (departure_time at time zone departure_tz) stored;
+alter table public.flights add column if not exists arrival_at timestamptz
+  generated always as (arrival_time at time zone arrival_tz) stored;
 
 drop trigger if exists flights_updated_at on public.flights;
 create trigger flights_updated_at
