@@ -697,6 +697,138 @@ grant select, insert, update, delete on table public.trip_members    to authenti
 alter default privileges in schema public
   grant select, insert, update, delete on tables to authenticated;
 
+-- ═══════════════════════════════════════════════════════════════
+--  MCP server plumbing (Model Context Protocol + OAuth 2.1)
+--
+--  The bunny MCP server lets Claude plan trips directly in bunny.
+--  It speaks OAuth 2.1 so a claude.ai connector can sign the user
+--  in with the very same Supabase session the web app uses.
+--
+--  These three tables hold secrets (token hashes, encrypted Supabase
+--  sessions, OAuth client registrations), so they are deliberately
+--  NOT reachable by `anon` or `authenticated`:
+--    * the MCP server reads/writes them with the service-role key,
+--    * the settings UI reaches them through the SECURITY DEFINER
+--      helpers at the bottom of this section, which are scoped to
+--      auth.uid() and return no secrets.
+--  Every trip/flight/rental read or write still goes through the
+--  caller's own JWT, so RLS applies exactly as it does in the app.
+-- ═══════════════════════════════════════════════════════════════
+
+-- ── OAuth clients registered via dynamic client registration ──
+create table if not exists public.mcp_oauth_clients (
+  client_id                 text primary key,
+  client_name               text,
+  client_uri                text,
+  logo_uri                  text,
+  redirect_uris             text[] not null default '{}',
+  grant_types               text[] not null default '{"authorization_code","refresh_token"}',
+  response_types            text[] not null default '{"code"}',
+  scope                     text not null default '',
+  token_endpoint_auth_method text not null default 'none',
+  created_at                timestamptz not null default now()
+);
+
+-- ── one-time authorization codes (PKCE) ───────────────────────
+create table if not exists public.mcp_auth_codes (
+  id             uuid primary key default gen_random_uuid(),
+  code_hash      text not null unique,
+  user_id        uuid not null references auth.users(id) on delete cascade,
+  client_id      text not null,
+  client_name    text,
+  redirect_uri   text not null,
+  code_challenge text not null,
+  code_challenge_method text not null default 'S256',
+  scope          text not null default '',
+  session_ciphertext text not null,
+  expires_at     timestamptz not null,
+  used_at        timestamptz,
+  created_at     timestamptz not null default now()
+);
+
+create index if not exists mcp_auth_codes_expires_idx on public.mcp_auth_codes(expires_at);
+
+-- ── issued MCP access/refresh tokens ──────────────────────────
+create table if not exists public.mcp_credentials (
+  id                uuid primary key default gen_random_uuid(),
+  user_id           uuid not null references auth.users(id) on delete cascade,
+  client_id         text not null,
+  client_name       text,
+  scope             text not null default '',
+  access_token_hash text not null unique,
+  refresh_token_hash text unique,
+  session_ciphertext text not null,
+  expires_at        timestamptz not null,
+  refresh_expires_at timestamptz,
+  revoked_at        timestamptz,
+  last_used_at      timestamptz,
+  created_at        timestamptz not null default now()
+);
+
+create index if not exists mcp_credentials_user_idx on public.mcp_credentials(user_id);
+
+alter table public.mcp_oauth_clients enable row level security;
+alter table public.mcp_auth_codes   enable row level security;
+alter table public.mcp_credentials  enable row level security;
+
+-- No policies on purpose: these tables are server-only. RLS is enabled
+-- so that a stray grant can never expose them to a client.
+revoke all on table public.mcp_oauth_clients from anon, authenticated;
+revoke all on table public.mcp_auth_codes   from anon, authenticated;
+revoke all on table public.mcp_credentials  from anon, authenticated;
+
+grant all on table public.mcp_oauth_clients to service_role;
+grant all on table public.mcp_auth_codes   to service_role;
+grant all on table public.mcp_credentials  to service_role;
+
+-- ── settings UI: list + revoke your own MCP connections ───────
+-- SECURITY DEFINER because `authenticated` has no table grants.
+-- Both check auth.uid(), so a caller can only ever see or revoke
+-- their own connections, and no token material is returned.
+create or replace function public.mcp_my_connections()
+returns table (
+  id           uuid,
+  client_name  text,
+  client_id    text,
+  scope        text,
+  created_at   timestamptz,
+  last_used_at timestamptz,
+  expires_at   timestamptz,
+  revoked_at   timestamptz
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select c.id, c.client_name, c.client_id, c.scope,
+         c.created_at, c.last_used_at, c.expires_at, c.revoked_at
+    from public.mcp_credentials c
+   where c.user_id = auth.uid()
+   order by c.created_at desc;
+$$;
+
+create or replace function public.mcp_revoke_connection(p_credential_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  update public.mcp_credentials
+     set revoked_at = now()
+   where id = p_credential_id
+     and user_id = auth.uid()
+     and revoked_at is null;
+  return found;
+end;
+$$;
+
+revoke all on function public.mcp_my_connections() from public;
+grant execute on function public.mcp_my_connections() to authenticated;
+revoke all on function public.mcp_revoke_connection(uuid) from public;
+grant execute on function public.mcp_revoke_connection(uuid) to authenticated;
+
 -- Refresh PostgREST's schema cache so the new tables/columns are
 -- immediately reachable over the Data API.
 notify pgrst, 'reload schema';

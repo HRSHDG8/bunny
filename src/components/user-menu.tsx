@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, Moon, Sun } from "lucide-react";
+import { LogOut, Moon, Settings, Sun } from "lucide-react";
 import { signOut } from "@/lib/actions/auth";
 import { cn } from "@/lib/utils";
 
@@ -121,6 +122,13 @@ export function UserMenu({
               />
             </span>
           </button>
+          <Link
+            href="/settings"
+            className="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-ink-soft transition-colors hover:bg-cream hover:text-ink"
+          >
+            <Settings className="h-4 w-4" />
+            Connections
+          </Link>
           <button
             type="button"
             onClick={() => {
@@ -129,7 +137,7 @@ export function UserMenu({
                 setTimeout(() => setCopied(false), 1500);
               });
             }}
-            className="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-ink-soft transition-colors hover:bg-cream"
+            className="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-ink-soft transition-colors hover:bg-cream hover:text-ink"
           >
             {copied ? "Copied email" : "Copy email"}
           </button>

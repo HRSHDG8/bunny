@@ -2,7 +2,6 @@
 
 import React from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Loader2, Lock, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -14,7 +13,6 @@ export function LoginForm({ next }: { next: string }) {
   const [error, setError] = React.useState<string | null>(null);
   const [notice, setNotice] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
-  const router = useRouter();
 
   const configured = isConfigured();
   const base = appBaseUrl() || window.location.origin;
@@ -66,8 +64,9 @@ export function LoginForm({ next }: { next: string }) {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        router.push(next);
-        router.refresh();
+        // A full navigation, so `next` can point at a route handler
+        // (the OAuth authorize endpoint) as well as a page.
+        window.location.assign(next);
       } else {
         rememberNext();
         const { error, data: res } = await supabase.auth.signUp({
@@ -79,8 +78,7 @@ export function LoginForm({ next }: { next: string }) {
         if (!res.session) {
           setNotice("Check your inbox - we sent you a link to confirm your email.");
         } else {
-          router.push(next);
-          router.refresh();
+          window.location.assign(next);
         }
       }
     });

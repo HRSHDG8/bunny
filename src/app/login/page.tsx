@@ -10,7 +10,11 @@ export default async function LoginPage(
 ) {
   const searchParams = await props.searchParams;
   const raw = searchParams.next;
-  const next = typeof raw === "string" && raw ? raw : "/dashboard";
+  // Only same-site paths: an absolute URL here would be an open redirect.
+  const next =
+    typeof raw === "string" && raw.startsWith("/") && !raw.startsWith("//")
+      ? raw
+      : "/dashboard";
 
   return (
     <main className="grid flex-1 lg:grid-cols-2">
