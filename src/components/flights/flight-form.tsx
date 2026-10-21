@@ -90,12 +90,15 @@ export function FlightForm({
   const [error, setError] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
 
-  // Flights this one can connect to (exclude itself and its own journey's
-  // legs — connecting to a sibling makes no sense).
+  // Flights this one can connect to: everything except itself and the
+  // other legs of its own journey (connecting to a sibling makes no
+  // sense). A standalone flight (journey_id null) may join anything.
   const otherFlights = React.useMemo(
     () =>
       flights.filter(
-        (f) => f.id !== flight?.id && f.journey_id !== flight?.journey_id,
+        (f) =>
+          f.id !== flight?.id &&
+          (!flight?.journey_id || f.journey_id !== flight.journey_id),
       ),
     [flights, flight],
   );

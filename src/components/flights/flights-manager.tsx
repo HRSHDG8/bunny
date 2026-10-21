@@ -10,23 +10,32 @@ import { FlightCard } from "@/components/flights/flight-card";
 import { Button, EmptyState, Modal } from "@/components/ui";
 
 /**
- * Group consecutive flights sharing a journey_id into one block. Flights
- * arrive pre-sorted by departure; a group is just its members in order.
+ * Group legs of one journey. Storage points every follower at the
+ * leader's id while the leader keeps journey_id null, so the grouping
+ * key is journey_id ?? own id — followers then land on the leader's
+ * group. Legs are sorted by departure inside each group so layovers
+ * always render chronologically.
  */
 function groupJourneys(flights: Flight[]): Flight[][] {
   const groups: Flight[][] = [];
-  const byJourney = new Map<string, Flight[]>();
+  const byKey = new Map<string, Flight[]>();
   for (const f of flights) {
-    if (!f.journey_id) {
-      groups.push([f]);
-      continue;
-    }
-    const g = byJourney.get(f.journey_id);
+    const key = f.journey_id ?? f.id;
+    const g = byKey.get(key);
     if (g) g.push(f);
     else {
       const group = [f];
-      byJourney.set(f.journey_id, group);
+      byKey.set(key, group);
       groups.push(group);
+    }
+  }
+  for (const group of groups) {
+    if (group.length > 1) {
+      group.sort((a, b) =>
+        (a.departure_at ?? a.departure_time ?? "").localeCompare(
+          b.departure_at ?? b.departure_time ?? "",
+        ),
+      );
     }
   }
   return groups;
@@ -103,8 +112,15 @@ export function FlightsManager({
         />
       ) : (
         <div className="space-y-4">
-          {groupJourneys(flights).map((group) => (
-            <div key={group[0].id} className="space-y-4">
+          {groupJourneys(flights).map((group, groupIndex) => (
+            <div
+              key={group[0].id}
+              className={
+                groupIndex > 0
+                  ? "space-y-4 border-t border-line pt-4"
+                  : "space-y-4"
+              }
+            >
               {group.map((f, legIndex) => {
                 const layover =
                   legIndex > 0

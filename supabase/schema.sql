@@ -117,9 +117,10 @@ create trigger flights_updated_at
 
 -- ── flight_passengers ──────────────────────────────────────────
 -- One flight leg, many people, each with their own seat. No rows =
--- "whole trip". trip_id is denormalized from the parent flight so we
--- can enforce "a person is on at most one flight per trip" with a
--- plain unique index. A BEFORE trigger keeps it in sync automatically.
+-- "whole trip". trip_id is denormalized from the parent flight so RLS
+-- policies can check trip membership cheaply. A BEFORE trigger keeps
+-- it in sync automatically. People may ride several flights (outbound,
+-- connecting legs, return) — only (flight_id, user_id) is unique.
 create table if not exists public.flight_passengers (
   flight_id  uuid not null references public.flights(id) on delete cascade,
   trip_id    uuid not null references public.trips(id) on delete cascade,
@@ -131,6 +132,12 @@ create table if not exists public.flight_passengers (
 
 -- upgrade a pre-existing passengers table (before trip_id existed)
 alter table public.flight_passengers add column if not exists trip_id uuid references public.trips(id) on delete cascade;
+
+-- older databases enforced "one flight per person per trip"; that
+-- blocks outbound/return legs and connected journeys, so drop it
+-- wherever it lives (constraint or standalone index)
+alter table public.flight_passengers drop constraint if exists flight_passengers_one_flight_per_user;
+drop index if exists flight_passengers_one_flight_per_user;
 
 create index if not exists flight_passengers_user_idx on public.flight_passengers(user_id);
 
