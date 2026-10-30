@@ -2,6 +2,7 @@
 
 import React from "react";
 import {
+  BedDouble,
   ChevronDown,
   ChevronUp,
   Clock,
@@ -11,7 +12,7 @@ import {
   StickyNote,
   Trash2,
 } from "lucide-react";
-import type { ItineraryItem } from "@/lib/types";
+import type { ItineraryItem, Stay } from "@/lib/types";
 import {
   deleteItineraryItem,
   moveItineraryItem,
@@ -31,11 +32,13 @@ export function DayPlanner({
   tripId,
   days,
   items,
+  stays = [],
   locked = false,
 }: {
   tripId: string;
   days: DayInfo[];
   items: ItineraryItem[];
+  stays?: Stay[];
   locked?: boolean;
 }) {
   const [activeDay, setActiveDay] = React.useState(days[0]?.dayNumber ?? 1);
@@ -157,6 +160,9 @@ export function DayPlanner({
                 <TimelineItem
                   key={item.id}
                   item={item}
+                  stayName={
+                    stays.find((s) => s.id === item.stay_id)?.name ?? null
+                  }
                   isFirst={index === 0}
                   isLast={index === dayItems.length - 1}
                   locked={locked}
@@ -199,6 +205,7 @@ export function DayPlanner({
           tripId={tripId}
           dayNumber={editing?.day_number ?? activeDay}
           item={editing ?? undefined}
+          stays={stays}
           onSaved={() => setOpen(false)}
         />
       </Modal>
@@ -208,6 +215,7 @@ export function DayPlanner({
 
 function TimelineItem({
   item,
+  stayName,
   isFirst,
   isLast,
   locked = false,
@@ -217,6 +225,7 @@ function TimelineItem({
   onMoveDown,
 }: {
   item: ItineraryItem;
+  stayName: string | null;
   isFirst: boolean;
   isLast: boolean;
   locked?: boolean;
@@ -282,6 +291,12 @@ function TimelineItem({
                 <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-muted">
                   <Clock className="h-3.5 w-3.5 text-sea" />
                   {item.start_time ? item.start_time.slice(0, 5) : "from start"}→{item.end_time ? item.end_time.slice(0, 5) : "soon"}
+                </span>
+              ) : null}
+              {stayName ? (
+                <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-muted">
+                  <BedDouble className="h-3.5 w-3.5 text-rust" />
+                  {stayName}
                 </span>
               ) : null}
             </div>

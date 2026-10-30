@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Calendar, Car, Map, Plane } from "lucide-react";
+import { BedDouble, Calendar, Car, Map, Plane } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { id: "overview", label: "Overview", href: (id: string) => `/trips/${id}` },
   { id: "itinerary", label: "Itinerary", href: (id: string) => `/trips/${id}/itinerary` },
   { id: "flights", label: "Flights", href: (id: string) => `/trips/${id}/flights` },
+  { id: "stays", label: "Stays", href: (id: string) => `/trips/${id}/stays` },
   { id: "rental", label: "Rental", href: (id: string) => `/trips/${id}/rental` },
 ] as const;
 
@@ -16,6 +17,7 @@ const icons: Record<string, React.ReactNode> = {
   overview: <Calendar className="h-3.5 w-3.5" />,
   itinerary: <Map className="h-3.5 w-3.5" />,
   flights: <Plane className="h-3.5 w-3.5" />,
+  stays: <BedDouble className="h-3.5 w-3.5" />,
   rental: <Car className="h-3.5 w-3.5" />,
 };
 

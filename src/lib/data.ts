@@ -4,6 +4,7 @@ import type {
   Flight,
   ItineraryItem,
   Rental,
+  Stay,
   Trip,
   TripMember,
   TripPerson,
@@ -122,6 +123,17 @@ export async function getRentals(tripId: string): Promise<Rental[]> {
     .eq("trip_id", tripId)
     .order("pickup_time", { ascending: true });
   if (error) throw dataError("Couldn't load the rental", error);
+  return data;
+}
+
+export async function getStays(tripId: string): Promise<Stay[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("stays")
+    .select("*")
+    .eq("trip_id", tripId)
+    .order("check_in", { ascending: true, nullsFirst: false });
+  if (error) throw dataError("Couldn't load the stays", error);
   return data;
 }
 

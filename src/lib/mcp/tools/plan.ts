@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import { createTrip, type TripInput } from "@/lib/services/trips";
 import { createFlight, type FlightInput } from "@/lib/services/flights";
 import { createRental, type RentalInput } from "@/lib/services/rentals";
+import { createStay, type StayInput } from "@/lib/services/stays";
 import { createItineraryItem, type ItineraryInput } from "@/lib/services/itinerary";
 import { registerTool, dateString, dateTimeString, timeString, uuid } from "@/lib/mcp/tools/shared";
 import { loadTrip, tripSummary } from "@/lib/mcp/tools/queries";
@@ -36,6 +37,18 @@ const rentalShape = z.object({
   notes: z.string().optional(),
 });
 
+const stayShape = z.object({
+  name: z.string().optional(),
+  place_name: z.string().optional(),
+  address: z.string().optional(),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
+  check_in: dateTimeString.optional(),
+  check_out: dateTimeString.optional(),
+  booking_ref: z.string().optional(),
+  notes: z.string().optional(),
+});
+
 const itemShape = z.object({
   day_number: z.number().int().min(1),
   title: z.string(),
@@ -45,6 +58,16 @@ const itemShape = z.object({
   start_time: timeString.optional(),
   end_time: timeString.optional(),
   notes: z.string().optional(),
+  stay_index: z
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .describe("1-based index into the stays list this activity belongs to."),
+  stay_id: z
+    .string()
+    .optional()
+    .describe("Id of an existing stay on the trip this activity belongs to."),
 });
 
 export function registerPlanTools(server: McpServer) {
@@ -54,7 +77,7 @@ export function registerPlanTools(server: McpServer) {
     {
       title: "Plan a whole trip",
       description:
-        "Plan a trip in one go: create the trip (or add to an existing one) and fill it with flights, a car rental and a day-by-day itinerary. Everything is optional except the trip details, and each piece is added separately so a failure in one doesn't lose the rest.",
+        "Plan a trip in one go: create the trip (or add to an existing one) and fill it with flights, stays, a car rental and a day-by-day itinerary. Everything is optional except the trip details, and each piece is added separately so a failure in one doesn't lose the rest.",
       inputSchema: z.object({
         trip_id: z
           .string()
@@ -69,6 +92,10 @@ export function registerPlanTools(server: McpServer) {
           .optional(),
         arrival_notes: z.string().optional(),
         flights: z.array(flightShape).describe("Flights to add.").optional(),
+        stays: z
+          .array(stayShape)
+          .describe("Hotels and other accommodation to add.")
+          .optional(),
         rental: rentalShape.describe("A car rental to add.").optional(),
         itinerary: z
           .array(itemShape)
@@ -141,6 +168,32 @@ export function registerPlanTools(server: McpServer) {
         }
       }
 
+      const stayIds: string[] = [];
+      for (const [index, stay] of (args.stays ?? []).entries()) {
+        try {
+          const input: StayInput = {
+            name: stay.name ?? "",
+            place_name: stay.place_name ?? "",
+            address: stay.address ?? "",
+            lat: stay.lat ?? null,
+            lng: stay.lng ?? null,
+            check_in: stay.check_in ?? "",
+            check_out: stay.check_out ?? "",
+            booking_ref: stay.booking_ref ?? "",
+            notes: stay.notes ?? "",
+          };
+          const id = await createStay(principal.supabase, tripId, input);
+          stayIds.push(id);
+          created.push(`stay ${id}`);
+        } catch (error) {
+          stayIds.push("");
+          failed.push({
+            step: `stay ${index + 1}`,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+
       if (args.rental) {
         try {
           const input: RentalInput = {
@@ -176,6 +229,10 @@ export function registerPlanTools(server: McpServer) {
             start_time: item.start_time ?? "",
             end_time: item.end_time ?? "",
             notes: item.notes ?? "",
+            stay_id:
+              item.stay_index !== undefined
+                ? stayIds[item.stay_index - 1] || null
+                : item.stay_id ?? null,
           };
           const id = await createItineraryItem(principal.supabase, tripId, input);
           created.push(`activity ${id}`);

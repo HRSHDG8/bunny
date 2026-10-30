@@ -1,4 +1,4 @@
-import { getItinerary, getTrip, isTripCompleted, tripDays } from "@/lib/data";
+import { getItinerary, getStays, getTrip, isTripCompleted, tripDays } from "@/lib/data";
 import { DayPlanner } from "@/components/itinerary/day-planner";
 
 export const metadata = { title: "Itinerary" };
@@ -7,7 +7,11 @@ export default async function ItineraryPage(
   props: PageProps<"/trips/[id]/itinerary">,
 ) {
   const { id } = await props.params;
-  const [trip, items] = await Promise.all([getTrip(id), getItinerary(id)]);
+  const [trip, items, stays] = await Promise.all([
+    getTrip(id),
+    getItinerary(id),
+    getStays(id),
+  ]);
 
   const days = tripDays(trip).map((d) => ({
     dayNumber: d.dayNumber,
@@ -20,6 +24,7 @@ export default async function ItineraryPage(
       tripId={id}
       days={days}
       items={items}
+      stays={stays}
       locked={isTripCompleted(trip)}
     />
   );

@@ -51,8 +51,8 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<your-publishable-key>
 
 Open **SQL Editor** → New query, paste the contents of
 [`supabase/schema.sql`](./supabase/schema.sql), and run it. This creates the
-`trips`, `flights`, `rentals`, and `itinerary_items` tables with Row Level
-Security so users can only see their own data.
+`trips`, `flights`, `rentals`, `stays`, and `itinerary_items` tables with Row
+Level Security so users can only see their own data.
 
 ### 4. Enable auth providers
 
@@ -88,13 +88,13 @@ one with the "Create an account" toggle on the login page.
 ## The MCP server (Claude)
 
 bunny speaks the Model Context Protocol, so Claude can create trips, add
-flights and rentals, build itineraries and plan a whole trip in one go —
+flights, stays and rentals, build itineraries and plan a whole trip in one go —
 acting as you, with the same permissions the web app has.
 
 - Endpoint: `https://<your-domain>/api/mcp`
 - Transport: Streamable HTTP, OAuth 2.1 (authorization code + PKCE, refresh
   token rotation)
-- Tools: trips, flights, rentals, itinerary, trip people, invites, airport and
+- Tools: trips, flights, stays, rentals, itinerary, trip people, invites, airport and
   place lookup, and a composite `plan_trip`
 
 ### Setup

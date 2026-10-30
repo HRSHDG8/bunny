@@ -2,20 +2,22 @@
 
 import React from "react";
 import { Loader2, LocateFixed, MapPin, X } from "lucide-react";
-import type { ItineraryItem, PlaceResult } from "@/lib/types";
+import type { ItineraryItem, PlaceResult, Stay } from "@/lib/types";
 import { createItineraryItem, updateItineraryItem } from "@/lib/actions/itinerary";
 import { PlaceSearch } from "@/components/place-search";
-import { Button, Field, Input, Textarea } from "@/components/ui";
+import { Button, Field, Input, Select, Textarea } from "@/components/ui";
 
 export function ItineraryItemForm({
   tripId,
   dayNumber,
   item,
+  stays = [],
   onSaved,
 }: {
   tripId: string;
   dayNumber: number;
   item?: ItineraryItem;
+  stays?: Stay[];
   onSaved?: () => void;
 }) {
   const [error, setError] = React.useState<string | null>(null);
@@ -54,6 +56,7 @@ export function ItineraryItemForm({
       start_time: String(data.get("start_time") ?? ""),
       end_time: String(data.get("end_time") ?? ""),
       notes: String(data.get("notes") ?? ""),
+      stay_id: String(data.get("stay_id") ?? "") || null,
     };
 
     setError(null);
@@ -135,6 +138,22 @@ export function ItineraryItemForm({
           defaultValue={item?.notes ?? ""}
         />
       </Field>
+
+      {stays.length > 0 ? (
+        <Field
+          label="Stay"
+          hint="Link this to a hotel or apartment, e.g. check-in or dinner at the stay."
+        >
+          <Select name="stay_id" defaultValue={item?.stay_id ?? ""}>
+            <option value="">No stay</option>
+            {stays.map((stay) => (
+              <option key={stay.id} value={stay.id}>
+                {stay.name || stay.place_name || "Stay"}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      ) : null}
 
       <div className="flex items-center justify-between gap-3 pt-1">
         <p className="hidden items-center gap-1.5 text-xs text-muted sm:flex">

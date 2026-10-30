@@ -197,6 +197,30 @@ create trigger rentals_updated_at
   before update on public.rentals
   for each row execute function public.set_updated_at();
 
+-- ── stays (accommodation) ──────────────────────────────────────
+create table if not exists public.stays (
+  id             uuid primary key default gen_random_uuid(),
+  trip_id        uuid not null references public.trips(id) on delete cascade,
+  name           text,   -- hotel / apartment / guesthouse name
+  place_name     text,
+  address        text,
+  lat            double precision,
+  lng            double precision,
+  check_in       timestamptz,
+  check_out      timestamptz,
+  booking_ref    text,
+  notes          text,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+
+create index if not exists stays_trip_id_idx on public.stays(trip_id);
+
+drop trigger if exists stays_updated_at on public.stays;
+create trigger stays_updated_at
+  before update on public.stays
+  for each row execute function public.set_updated_at();
+
 -- ── itinerary_items ────────────────────────────────────────────
 -- day_number is 1-based: 1 = start_date, 2 = start_date+1, ...
 create table if not exists public.itinerary_items (
@@ -217,6 +241,10 @@ create table if not exists public.itinerary_items (
 );
 
 create index if not exists itinerary_trip_day_idx on public.itinerary_items(trip_id, day_number, sort_order);
+
+-- optional stay this activity belongs to (check-in, check-out, dinner at the hotel…)
+alter table public.itinerary_items
+  add column if not exists stay_id uuid references public.stays(id) on delete set null;
 
 drop trigger if exists itinerary_items_updated_at on public.itinerary_items;
 create trigger itinerary_items_updated_at
@@ -492,7 +520,7 @@ create trigger trips_no_edits_when_completed
   for each row execute function public.prevent_edits_on_completed_trip();
 
 -- (2b) freeze child rows of a completed trip (flights, rentals,
---      itinerary_items, trip_members)
+--      stays, itinerary_items, trip_members)
 create or replace function public.prevent_child_edits_on_completed_trip()
 returns trigger
 language plpgsql
@@ -526,6 +554,11 @@ create trigger rentals_no_edits_when_completed
   before insert or update or delete on public.rentals
   for each row execute function public.prevent_child_edits_on_completed_trip();
 
+drop trigger if exists stays_no_edits_when_completed on public.stays;
+create trigger stays_no_edits_when_completed
+  before insert or update or delete on public.stays
+  for each row execute function public.prevent_child_edits_on_completed_trip();
+
 drop trigger if exists itinerary_no_edits_when_completed on public.itinerary_items;
 create trigger itinerary_no_edits_when_completed
   before insert or update or delete on public.itinerary_items
@@ -549,6 +582,7 @@ alter table public.trips             enable row level security;
 alter table public.flights           enable row level security;
 alter table public.flight_passengers enable row level security;
 alter table public.rentals           enable row level security;
+alter table public.stays             enable row level security;
 alter table public.itinerary_items   enable row level security;
 alter table public.trip_members      enable row level security;
 
@@ -636,6 +670,26 @@ create policy "rentals_delete_own" on public.rentals
   for delete to authenticated
   using ( public.is_trip_editor(trip_id) );
 
+drop policy if exists "stays_select_own" on public.stays;
+create policy "stays_select_own" on public.stays
+  for select to authenticated
+  using ( public.is_trip_participant(trip_id) );
+
+drop policy if exists "stays_insert_own" on public.stays;
+create policy "stays_insert_own" on public.stays
+  for insert to authenticated
+  with check ( public.is_trip_editor(trip_id) );
+
+drop policy if exists "stays_update_own" on public.stays;
+create policy "stays_update_own" on public.stays
+  for update to authenticated
+  using ( public.is_trip_editor(trip_id) );
+
+drop policy if exists "stays_delete_own" on public.stays;
+create policy "stays_delete_own" on public.stays
+  for delete to authenticated
+  using ( public.is_trip_editor(trip_id) );
+
 drop policy if exists "itinerary_select_own" on public.itinerary_items;
 create policy "itinerary_select_own" on public.itinerary_items
   for select to authenticated
@@ -690,6 +744,7 @@ grant select, insert, update, delete on table public.trips           to authenti
 grant select, insert, update, delete on table public.flights         to authenticated;
 grant select, insert, update, delete on table public.flight_passengers to authenticated;
 grant select, insert, update, delete on table public.rentals         to authenticated;
+grant select, insert, update, delete on table public.stays           to authenticated;
 grant select, insert, update, delete on table public.itinerary_items to authenticated;
 grant select, insert, update, delete on table public.trip_members    to authenticated;
 

@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import { registerTripTools } from "@/lib/mcp/tools/trips";
 import { registerFlightTools } from "@/lib/mcp/tools/flights";
 import { registerRentalTools } from "@/lib/mcp/tools/rentals";
+import { registerStayTools } from "@/lib/mcp/tools/stays";
 import { registerItineraryTools } from "@/lib/mcp/tools/itinerary";
 import { registerLookupTools } from "@/lib/mcp/tools/lookup";
 import { registerPlanTools } from "@/lib/mcp/tools/plan";
@@ -17,6 +18,7 @@ export function registerMcpTools(server: McpServer) {
   registerTripTools(server);
   registerFlightTools(server);
   registerRentalTools(server);
+  registerStayTools(server);
   registerItineraryTools(server);
   registerLookupTools(server);
   registerPlanTools(server);

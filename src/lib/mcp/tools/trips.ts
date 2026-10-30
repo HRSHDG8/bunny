@@ -16,6 +16,7 @@ import {
   loadItinerary,
   loadPeople,
   loadRentals,
+  loadStays,
   loadTrip,
   tripSummary,
 } from "@/lib/mcp/tools/queries";
@@ -71,16 +72,17 @@ export function registerTripTools(server: McpServer) {
     {
       title: "Get a trip",
       description:
-        "Load one trip in full: the trip itself, its flights, car rental, day-by-day itinerary, who's coming, and the invite link.",
+        "Load one trip in full: the trip itself, its flights, stays, car rental, day-by-day itinerary, who's coming, and the invite link.",
       inputSchema: z.object({
         trip_id: z.string().describe("The id of the trip."),
       }),
     },
     async ({ trip_id }, principal) => {
       const trip = await loadTrip(principal.supabase, trip_id);
-      const [flights, rentals, itinerary, people] = await Promise.all([
+      const [flights, rentals, stays, itinerary, people] = await Promise.all([
         loadFlights(principal.supabase, trip_id),
         loadRentals(principal.supabase, trip_id),
+        loadStays(principal.supabase, trip_id),
         loadItinerary(principal.supabase, trip_id),
         loadPeople(principal.supabase, trip_id),
       ]);
@@ -88,6 +90,7 @@ export function registerTripTools(server: McpServer) {
         trip: tripSummary(trip),
         flights,
         rentals,
+        stays,
         itinerary,
         people,
       };

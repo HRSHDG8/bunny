@@ -10,6 +10,7 @@ export interface ItineraryInput {
   start_time: string;
   end_time: string;
   notes: string;
+  stay_id: string | null;
 }
 
 function validateTitle(title: string) {
@@ -47,6 +48,7 @@ export async function createItineraryItem(
       start_time: input.start_time || null,
       end_time: input.end_time || null,
       notes: input.notes.trim() || null,
+      stay_id: input.stay_id || null,
       sort_order: (last?.sort_order ?? 0) + 1,
     });
   if (error) throw apiError("Couldn't add the activity.", error);
@@ -71,6 +73,7 @@ export async function updateItineraryItem(
       start_time: input.start_time || null,
       end_time: input.end_time || null,
       notes: input.notes.trim() || null,
+      stay_id: input.stay_id || null,
     })
     .eq("id", itemId);
   if (error) throw apiError("Couldn't save the activity.", error);

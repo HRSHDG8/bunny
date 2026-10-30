@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { ArrowRight, Car, MapPin, Plane, Train, Ship, Footprints } from "lucide-react";
-import { getFlights, getItinerary, getRentals, getTrip, getTripPeople, isTripCompleted, tripDays } from "@/lib/data";
+import { getFlights, getItinerary, getRentals, getStays, getTrip, getTripPeople, isTripCompleted, tripDays } from "@/lib/data";
 import { FlightCard } from "@/components/flights/flight-card";
 import { RentalCard } from "@/components/rental/rental-card";
+import { StayCard } from "@/components/stay/stay-card";
 import { Badge, Card, EmptyState } from "@/components/ui";
 
 export const metadata = { title: "Trip overview" };
@@ -22,10 +23,11 @@ export default async function TripOverviewPage(
   props: PageProps<"/trips/[id]">,
 ) {
   const { id } = await props.params;
-  const [trip, flights, rentals, items, people] = await Promise.all([
+  const [trip, flights, rentals, stays, items, people] = await Promise.all([
     getTrip(id),
     getFlights(id),
     getRentals(id),
+    getStays(id),
     getItinerary(id),
     getTripPeople(id),
   ]);
@@ -117,6 +119,26 @@ export default async function TripOverviewPage(
         <div className="space-y-4">
           {flights.slice(0, 2).map((f) => (
             <FlightCard key={f.id} flight={f} people={people} locked={locked} />
+          ))}
+        </div>
+      )}
+
+      {/* Stays */}
+      <SectionHeading
+        title="Stays"
+        link={`/trips/${trip.id}/stays`}
+        linkLabel={stays.length ? "Manage" : "Add stay"}
+      />
+      {stays.length === 0 ? (
+        <EmptyState
+          title="No stays yet"
+          body="Keep hotels, apartments and check-in details together."
+          action={<GoLink href={`/trips/${trip.id}/stays`} label="Add a stay" />}
+        />
+      ) : (
+        <div className="space-y-4">
+          {stays.slice(0, 1).map((s) => (
+            <StayCard key={s.id} stay={s} locked={locked} />
           ))}
         </div>
       )}

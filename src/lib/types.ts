@@ -89,6 +89,22 @@ export interface Rental {
   updated_at: string;
 }
 
+export interface Stay {
+  id: string;
+  trip_id: string;
+  name: string | null;
+  place_name: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  check_in: string | null;
+  check_out: string | null;
+  booking_ref: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ItineraryItem {
   id: string;
   trip_id: string;
@@ -100,6 +116,7 @@ export interface ItineraryItem {
   start_time: string | null; // "HH:MM:SS"
   end_time: string | null;
   notes: string | null;
+  stay_id: string | null;
   sort_order: number;
   created_at: string;
   updated_at: string;

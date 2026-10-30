@@ -27,7 +27,7 @@ export default async function McpGuidePage() {
           Connect bunny to Claude
         </h1>
         <p className="mt-1.5 max-w-2xl text-sm text-muted">
-          Use bunny&apos;s MCP server to create trips, add flights and rentals,
+          Use bunny&apos;s MCP server to create trips, add flights, stays and rentals,
           build itineraries and plan whole trips - all while you stay signed in
           to your own account.
         </p>

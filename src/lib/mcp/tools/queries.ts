@@ -4,6 +4,7 @@ import type {
   Flight,
   ItineraryItem,
   Rental,
+  Stay,
   Trip,
   TripPerson,
 } from "@/lib/types";
@@ -65,6 +66,28 @@ export async function loadRental(supabase: SupabaseClient, rentalId: string) {
   if (!data)
     throw new Error("That rental doesn't exist, or you don't have access to it.");
   return data as Rental;
+}
+
+export async function loadStays(supabase: SupabaseClient, tripId: string) {
+  const { data, error } = await supabase
+    .from("stays")
+    .select("*")
+    .eq("trip_id", tripId)
+    .order("check_in", { ascending: true, nullsFirst: false });
+  if (error) throw apiError("Couldn't load the stays.", error);
+  return (data ?? []) as Stay[];
+}
+
+export async function loadStay(supabase: SupabaseClient, stayId: string) {
+  const { data, error } = await supabase
+    .from("stays")
+    .select("*")
+    .eq("id", stayId)
+    .maybeSingle();
+  if (error) throw apiError("Couldn't load the stay.", error);
+  if (!data)
+    throw new Error("That stay doesn't exist, or you don't have access to it.");
+  return data as Stay;
 }
 
 export async function loadItinerary(supabase: SupabaseClient, tripId: string) {

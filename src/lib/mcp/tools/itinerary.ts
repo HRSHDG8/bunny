@@ -28,6 +28,10 @@ const itemFields = {
   start_time: timeString.describe("Start time (HH:MM).").optional(),
   end_time: timeString.describe("End time (HH:MM).").optional(),
   notes: z.string().describe("Any extra detail about the activity.").optional(),
+  stay_id: z
+    .string()
+    .describe("Optional id of a stay on the trip this activity belongs to.")
+    .optional(),
 };
 
 /** Update tools take only the fields being changed; the rest stay as they are. */
@@ -47,6 +51,7 @@ function toItemInput(args: Record<string, unknown>): ItineraryInput {
     start_time: (args.start_time as string) ?? "",
     end_time: (args.end_time as string) ?? "",
     notes: (args.notes as string) ?? "",
+    stay_id: (args.stay_id as string) ?? null,
   };
 }
 
@@ -71,6 +76,10 @@ function mergeItemInput(
     start_time: text("start_time", current.start_time),
     end_time: text("end_time", current.end_time),
     notes: text("notes", current.notes),
+    stay_id:
+      args.stay_id === undefined
+        ? current.stay_id
+        : ((args.stay_id as string) || null),
   };
 }
 
