@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogOut, Moon, Settings, Sun } from "lucide-react";
 import { signOut } from "@/lib/actions/auth";
+import { clearOfflinePages } from "@/lib/offline";
 import { cn } from "@/lib/utils";
 
 const emptySubscribe = () => () => {};
@@ -66,6 +67,7 @@ export function UserMenu({
 
   function handleSignOut() {
     startTransition(async () => {
+      await clearOfflinePages();
       await signOut();
       router.push("/");
       router.refresh();

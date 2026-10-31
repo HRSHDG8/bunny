@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import { Toaster } from "sonner";
+import { OfflineManager } from "@/components/offline/offline-manager";
 import "./globals.css";
 
 const inter = Inter({
@@ -25,7 +26,17 @@ export const metadata: Metadata = {
     "Plan every day of your trip: flights, rentals, and a day-by-day itinerary - all in one beautifully simple place.",
   icons: {
     icon: "/bunny logo white.jpeg",
+    apple: "/icons/apple-touch-icon.png",
   },
+  appleWebApp: {
+    capable: true,
+    title: "bunny",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#c3552a",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -43,6 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             __html: `(function(){try{var t=localStorage.getItem("bunny-theme");var d=t?t==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.classList.toggle("dark",d)}catch(e){}})();`,
           }}
         />
+        <OfflineManager />
         {children}
         <Toaster
           position="bottom-right"

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#c3552a" />
+    <title>Offline · bunny</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #f9f4ea;
+        --card: #fffdf7;
+        --ink: #21252e;
+        --ink-soft: #45484f;
+        --muted: #837c6e;
+        --line: #e7dcc5;
+        --rust: #c3552a;
+        --rust-deep: #9f3f1d;
+        --amber: #bd861e;
+        --amber-soft: #f3e7c8;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --paper: #15171b;
+          --card: #1d2026;
+          --ink: #f4efe4;
+          --ink-soft: #d3cec3;
+          --muted: #a49d8e;
+          --line: #343842;
+          --rust: #e07a4f;
+          --rust-deep: #c3552a;
+          --amber: #e3b45c;
+          --amber-soft: #3a3020;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: var(--paper);
+        color: var(--ink);
+        font-family:
+          ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        line-height: 1.5;
+      }
+      main {
+        width: 100%;
+        max-width: 28rem;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: var(--card);
+        padding: 32px;
+        box-shadow: 0 28px 60px -20px rgb(33 37 46 / 0.28);
+        text-align: center;
+      }
+      .mark {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
+        height: 56px;
+        margin-bottom: 18px;
+        border-radius: 16px;
+        background: var(--rust);
+        color: #fff;
+        font-size: 26px;
+        transform: rotate(-6deg);
+      }
+      .pill {
+        display: inline-block;
+        margin-bottom: 14px;
+        border: 1px solid color-mix(in srgb, var(--amber) 30%, transparent);
+        border-radius: 999px;
+        background: var(--amber-soft);
+        padding: 4px 12px;
+        color: var(--amber);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+      }
+      p {
+        margin: 12px 0 0;
+        color: var(--ink-soft);
+        font-size: 14px;
+      }
+      .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 24px;
+      }
+      a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        border-radius: 12px;
+        padding: 0 18px;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+      }
+      a.primary {
+        background: var(--rust);
+        color: #fff;
+      }
+      a.primary:hover {
+        background: var(--rust-deep);
+      }
+      a.secondary {
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+      a.secondary:hover {
+        border-color: var(--muted);
+      }
+      small {
+        display: block;
+        margin-top: 20px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="mark" aria-hidden="true">&#9902;</div>
+      <span class="pill">Offline</span>
+      <h1>This page isn&rsquo;t saved yet</h1>
+      <p>
+        You can still open pages you visited while online. Reconnect to load
+        anything new, and to save changes.
+      </p>
+      <div class="actions">
+        <a class="primary" href="/dashboard">Go to dashboard</a>
+        <a class="secondary" href="">Try again</a>
+      </div>
+      <small>Saved pages stay on this device until you sign out.</small>
+    </main>
+  </body>
+</html>

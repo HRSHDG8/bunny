@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowRight, Loader2, Lock, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { appBaseUrl, isConfigured } from "@/lib/supabase/config";
+import { clearOfflinePages } from "@/lib/offline";
 import { Button, Field, Input } from "@/components/ui";
 
 export function LoginForm({ next }: { next: string }) {
@@ -40,6 +41,7 @@ export function LoginForm({ next }: { next: string }) {
         return;
       }
       rememberNext();
+      await clearOfflinePages();
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -64,6 +66,7 @@ export function LoginForm({ next }: { next: string }) {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        await clearOfflinePages();
         // A full navigation, so `next` can point at a route handler
         // (the OAuth authorize endpoint) as well as a page.
         window.location.assign(next);
@@ -78,6 +81,7 @@ export function LoginForm({ next }: { next: string }) {
         if (!res.session) {
           setNotice("Check your inbox - we sent you a link to confirm your email.");
         } else {
+          await clearOfflinePages();
           window.location.assign(next);
         }
       }

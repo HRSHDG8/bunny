@@ -15,6 +15,8 @@ like a stamped passport.
   "car no" plate that you fill in when you collect the car
 - **Itinerary** — per-day planning with a live OSM map, note + rough times per
   spot, reordering, and real place search (OpenStreetMap/Photon)
+- **Offline, read-only** — pages you've already visited stay available without
+  a connection, and the app can be installed to your home screen
 - **MCP server** — let Claude plan trips in bunny, over OAuth 2.1, as you
 
 ## Stack
@@ -84,6 +86,28 @@ one with the "Create an account" toggle on the login page.
 - Deploy to **Vercel** (or anywhere Next.js runs). Set the same two env vars.
 - Add your production URL (e.g. `https://app.example.com/auth/callback`) to the
   Supabase redirect allow-list, and update the Google OAuth authorized origins.
+
+## Offline
+
+`public/sw.js` is a small service worker that keeps the app usable without a
+connection:
+
+- Rendered pages for `/dashboard` and `/trips/<id>/*` are saved after you visit
+  them (network-first, so you always get fresh data when online).
+- Hashed assets under `/_next/static` are cached permanently, so saved pages
+  keep their styles and scripts across deploys.
+- Pages you have never visited fall back to `public/offline.html`.
+- Offline the app is **read-only**: forms are blocked and changes cannot be
+  queued. This is deliberate — replaying writes later can conflict with edits
+  made elsewhere.
+- Signing out (or signing in as someone else) clears the saved pages, since
+  they contain personal trip data.
+
+The service worker only registers in a production build, so test it with
+`pnpm build && pnpm start`, then use your browser's offline mode. The manifest
+and icons in `public/icons` make the app installable; `start_url` is
+`/dashboard`, so installed launches require a connection until that page has
+been cached.
 
 ## The MCP server (Claude)
 

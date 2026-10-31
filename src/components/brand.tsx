@@ -2,9 +2,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-export function SiteMark({ className }: { className?: string }) {
+export function SiteMark({
+  href = "/",
+  className,
+}: {
+  href?: string;
+  className?: string;
+}) {
   return (
-    <Link href="/" className={cn("group inline-flex items-center gap-2.5", className)}>
+    <Link href={href} className={cn("group inline-flex items-center gap-2.5", className)}>
       <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white shadow-[0_10px_20px_-8px_rgba(195,85,42,0.35)] ring-1 ring-line/60 transition-transform group-hover:-rotate-6">
         <Image
           src="/bunny logo white.jpeg"
