@@ -18,12 +18,15 @@ like a stamped passport.
 - **Offline, read-only** — pages you've already visited stay available without
   a connection, and the app can be installed to your home screen
 - **MCP server** — let Claude plan trips in bunny, over OAuth 2.1, as you
+- **MCP Apps** — Claude renders `list_flights` as boarding-pass cards inside the
+  conversation, using the same look as the web app
 
 ## Stack
 
 - Next.js 16 (App Router, Turbopack, React 19) + TypeScript + Tailwind CSS v4
 - Supabase (Postgres + Auth), `@supabase/ssr`
 - Model Context Protocol: `@modelcontextprotocol/server` v2 + `mcp-handler`
+- MCP Apps: `@modelcontextprotocol/ext-apps` + a Vite single-file UI build
 - Place search proxy: [Photon / Komoot](https://photon.komoot.io) (free, no key)
 - Map preview: OpenStreetMap embed iframe
 - date-fns, lucide-react, sonner
@@ -145,6 +148,26 @@ acting as you, with the same permissions the web app has.
    connector, and use the server URL above. bunny's sign-in page takes over
    from there: the user approves the connection with their bunny account.
    Connected apps can be reviewed and revoked at `/settings`.
+
+### MCP Apps
+
+`list_flights` is also an [MCP App](https://modelcontextprotocol.io): hosts that
+support interactive UI (Claude Desktop / claude.ai) fetch
+`ui://bunny/flights.html` and render the trip's flights as boarding-pass cards
+with times, time zones, seats and booking references. Text-only clients keep
+getting the JSON fallback from the same tool.
+
+The UI lives in `mcp-apps/flights/` (vanilla TypeScript + the Apps SDK, bundled
+by Vite into one self-contained HTML file). Rebuild it after changing the UI:
+
+```bash
+pnpm build:mcp        # writes public/mcp-apps/flights.html
+pnpm build:mcp:watch  # rebuild on change while developing
+```
+
+`pnpm build` runs `build:mcp` before `next build`, so deploys always ship the
+latest UI. The server reads the file from `public/` at request time, falling
+back to `NEXT_PUBLIC_APP_URL` when the source tree isn't on disk.
 
 ### Endpoints
 

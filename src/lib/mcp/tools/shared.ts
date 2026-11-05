@@ -3,7 +3,9 @@ import type {
   McpServer,
   ServerContext,
   StandardSchemaWithJSON,
+  ToolCallback,
 } from "@modelcontextprotocol/server";
+import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import { principalFromAuthInfo, type McpPrincipal } from "@/lib/mcp/session";
 
 export const READ_SCOPE = "trips:read";
@@ -62,6 +64,17 @@ interface ToolConfig<Schema extends z.ZodType> {
   inputSchema: Schema;
   /** Write tools need the trips:write scope. */
   write?: boolean;
+  /** When set, the host renders this MCP App resource alongside the result. */
+  ui?: { resourceUri: string };
+}
+
+/** Structured tool output must be an object, not an array or a primitive. */
+function structuredContentOf(
+  data: unknown,
+): Record<string, unknown> | undefined {
+  if (data && typeof data === "object" && !Array.isArray(data))
+    return data as Record<string, unknown>;
+  return undefined;
 }
 
 /**
@@ -74,32 +87,55 @@ export function registerTool<Schema extends z.ZodType>(
   config: ToolConfig<Schema>,
   handler: (args: z.infer<Schema>, principal: McpPrincipal) => Promise<unknown>,
 ) {
+  const callback: ToolCallback<StandardSchemaWithJSON> = async (args, ctx) => {
+    try {
+      const principal = requirePrincipal(
+        ctx,
+        config.write ? WRITE_SCOPE : READ_SCOPE,
+      );
+      const data = await handler(args as z.infer<Schema>, principal);
+      const structuredContent = config.ui
+        ? structuredContentOf(data)
+        : undefined;
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
+        ...(structuredContent ? { structuredContent } : {}),
+      };
+    } catch (error) {
+      return {
+        content: [{ type: "text" as const, text: errorMessage(error) }],
+        isError: true,
+      };
+    }
+  };
+
+  // The SDK accepts any Standard Schema with a JSON Schema converter;
+  // zod v4 provides one, but its converter type is wider than the SDK's,
+  // so the cast is what keeps the two in step.
+  const inputSchema = config.inputSchema as unknown as StandardSchemaWithJSON;
+
+  if (config.ui) {
+    registerAppTool(
+      server,
+      name,
+      {
+        title: config.title,
+        description: config.description,
+        inputSchema,
+        _meta: { ui: config.ui },
+      },
+      callback,
+    );
+    return;
+  }
+
   server.registerTool(
     name,
     {
       title: config.title,
       description: config.description,
-      // The SDK accepts any Standard Schema with a JSON Schema converter;
-      // zod v4 provides one, but its converter type is wider than the
-      // SDK's, so the cast is what keeps the two in step.
-      inputSchema: config.inputSchema as unknown as StandardSchemaWithJSON,
+      inputSchema,
     },
-    async (args, ctx) => {
-      try {
-        const principal = requirePrincipal(
-          ctx,
-          config.write ? WRITE_SCOPE : READ_SCOPE,
-        );
-        const data = await handler(args as z.infer<Schema>, principal);
-        return {
-          content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text" as const, text: errorMessage(error) }],
-          isError: true,
-        };
-      }
-    },
+    callback,
   );
 }

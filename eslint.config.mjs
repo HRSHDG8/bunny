@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The MCP App UI is a separate Vite project.
+    "mcp-apps/**",
+    "public/mcp-apps/**",
   ]),
 ]);
 

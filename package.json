@@ -4,11 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build:mcp": "vite build --config mcp-apps/flights/vite.config.mts",
+    "build:mcp:watch": "vite build --watch --config mcp-apps/flights/vite.config.mts",
+    "build": "pnpm build:mcp && next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@modelcontextprotocol/client": "2.3.1",
+    "@modelcontextprotocol/core": "2.3.1",
+    "@modelcontextprotocol/ext-apps": "2.0.4",
     "@modelcontextprotocol/server": "^2.3.1",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
@@ -31,7 +36,9 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite": "^8.3.6",
+    "vite-plugin-singlefile": "^2.3.4"
   },
   "packageManager": "pnpm@10.30.0"
 }

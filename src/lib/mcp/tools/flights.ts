@@ -8,7 +8,8 @@ import {
 } from "@/lib/services/flights";
 import { apiError } from "@/lib/supabase/errors";
 import { registerTool, dateTimeString, merged, uuid } from "@/lib/mcp/tools/shared";
-import { loadFlight, loadFlights } from "@/lib/mcp/tools/queries";
+import { loadFlight, loadFlights, loadPeople } from "@/lib/mcp/tools/queries";
+import { FLIGHTS_APP_URI } from "@/lib/mcp/apps/flights";
 import type { Flight } from "@/lib/types";
 
 const passenger = z.object({
@@ -131,10 +132,14 @@ export function registerFlightTools(server: McpServer) {
       inputSchema: z.object({
         trip_id: z.string().describe("The id of the trip."),
       }),
+      ui: { resourceUri: FLIGHTS_APP_URI },
     },
     async ({ trip_id }, principal) => {
-      const flights = await loadFlights(principal.supabase, trip_id);
-      return { trip_id, flights };
+      const [flights, people] = await Promise.all([
+        loadFlights(principal.supabase, trip_id),
+        loadPeople(principal.supabase, trip_id),
+      ]);
+      return { trip_id, flights, people };
     },
   );
 

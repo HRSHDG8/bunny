@@ -6,6 +6,7 @@ import { registerStayTools } from "@/lib/mcp/tools/stays";
 import { registerItineraryTools } from "@/lib/mcp/tools/itinerary";
 import { registerLookupTools } from "@/lib/mcp/tools/lookup";
 import { registerPlanTools } from "@/lib/mcp/tools/plan";
+import { registerFlightsApp } from "@/lib/mcp/apps/flights";
 
 export const MCP_SERVER_NAME = "bunny";
 export const MCP_SERVER_VERSION = "1.0.0";
@@ -13,7 +14,7 @@ export const MCP_SERVER_VERSION = "1.0.0";
 export const MCP_INSTRUCTIONS =
   "bunny is a shared trip planner. Every tool acts as the signed-in bunny user, so it can only see and change their own trips. Use list_trips to find a trip id, get_trip to read one, and plan_trip to set up a whole trip in one go.";
 
-/** Registers every bunny tool on an MCP server instance. */
+/** Registers every bunny tool and app resource on an MCP server instance. */
 export function registerMcpTools(server: McpServer) {
   registerTripTools(server);
   registerFlightTools(server);
@@ -22,5 +23,6 @@ export function registerMcpTools(server: McpServer) {
   registerItineraryTools(server);
   registerLookupTools(server);
   registerPlanTools(server);
+  registerFlightsApp(server);
   return server;
 }
