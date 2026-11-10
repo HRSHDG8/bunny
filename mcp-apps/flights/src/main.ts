@@ -38,8 +38,16 @@ interface Person {
   full_name: string;
 }
 
+interface TripInfo {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
 interface FlightsPayload {
   trip_id: string;
+  can_write?: boolean;
+  trip?: TripInfo;
   flights: Flight[];
   people: Person[];
 }
@@ -62,6 +70,15 @@ const MONTHS = [
   "Nov",
   "Dec",
 ];
+const SEAT_LETTERS = "ABCDEF";
+const SEAT_PATTERN = /^[0-9]{1,2}[A-Z]$/;
+
+let payload: FlightsPayload | null = null;
+/** Unsaved seat drafts: flight id → user id → seat. */
+const drafts = new Map<string, Map<string, string>>();
+const saving = new Set<string>();
+const errors = new Map<string, string>();
+const savedAt = new Map<string, number>();
 
 function esc(value: unknown): string {
   return String(value ?? "").replace(
@@ -126,6 +143,60 @@ function nameOf(people: Person[], userId: string): string {
   return people.find((person) => person.user_id === userId)?.full_name ?? "Guest";
 }
 
+function validSeat(value: string): boolean {
+  return value === "" || SEAT_PATTERN.test(value);
+}
+
+function originalSeat(flightId: string, userId: string): string {
+  const flight = payload?.flights.find((item) => item.id === flightId);
+  const passenger = flight?.flight_passengers.find(
+    (item) => item.user_id === userId,
+  );
+  return passenger?.seat ?? "";
+}
+
+function draftSeat(flightId: string, userId: string): string {
+  const draft = drafts.get(flightId)?.get(userId);
+  return draft !== undefined ? draft : originalSeat(flightId, userId);
+}
+
+function setDraft(flightId: string, userId: string, value: string) {
+  let map = drafts.get(flightId);
+  if (!map) {
+    map = new Map();
+    drafts.set(flightId, map);
+  }
+  map.set(userId, value);
+}
+
+function isEditable(): boolean {
+  return Boolean(payload && payload.can_write !== false && !payload.trip?.completed);
+}
+
+function seatChip(flightId: string, passenger: FlightPassenger, people: Person[]) {
+  const name = nameOf(people, passenger.user_id);
+  if (!isEditable()) {
+    return `<span class="badge badge-sea">${esc(name)}${
+      passenger.seat ? ` · ${esc(passenger.seat)}` : ""
+    }</span>`;
+  }
+  return `
+    <label class="seat-chip" title="Seat for ${esc(name)}">
+      <span class="seat-name">${esc(name)}</span>
+      <input
+        class="seat-input"
+        data-flight="${esc(flightId)}"
+        data-user="${esc(passenger.user_id)}"
+        value="${esc(draftSeat(flightId, passenger.user_id))}"
+        maxlength="3"
+        autocomplete="off"
+        spellcheck="false"
+        aria-label="Seat for ${esc(name)}"
+      />
+    </label>
+  `;
+}
+
 function flightCard(flight: Flight, people: Person[]): string {
   const departure =
     flight.departure_code || flight.departure_place?.slice(0, 6) || "-";
@@ -133,20 +204,26 @@ function flightCard(flight: Flight, people: Person[]): string {
     flight.arrival_code || flight.arrival_place?.slice(0, 6) || "-";
   const duration = legDuration(flight);
   const passengers = flight.flight_passengers ?? [];
-  const seats = passengers.length
-    ? passengers.map((passenger) => passenger.seat || "-").join(" · ")
-    : "-";
+  const editable = isEditable();
 
   const badges = passengers.length
     ? passengers
-        .map(
-          (passenger) =>
-            `<span class="badge badge-sea">${esc(
-              nameOf(people, passenger.user_id),
-            )}${passenger.seat ? ` · ${esc(passenger.seat)}` : ""}</span>`,
-        )
+        .map((passenger) => seatChip(flight.id, passenger, people))
         .join("")
     : `<span class="badge badge-amber">Whole trip</span>`;
+
+  const actions =
+    editable && passengers.length > 0
+      ? `
+        <div class="seat-actions">
+          <button type="button" class="btn btn-ghost" data-action="auto" data-flight="${esc(flight.id)}">Auto-assign</button>
+          <button type="button" class="btn btn-primary" data-action="save" data-flight="${esc(flight.id)}" disabled>Save seats</button>
+          <span class="save-state" data-state="${esc(flight.id)}"></span>
+        </div>
+      `
+      : "";
+
+  const error = errors.get(flight.id);
 
   return `
     <article class="ticket">
@@ -186,12 +263,18 @@ function flightCard(flight: Flight, people: Person[]): string {
             )}</p>
           </div>
         </div>
+        ${actions}
+        ${error ? `<p class="card-error">${esc(error)}</p>` : ""}
       </div>
       <div class="stub">
         <p class="micro">Booking</p>
         <p class="mono">${esc(flight.booking_ref || "-")}</p>
         <p class="micro">Seats</p>
-        <p class="mono">${esc(seats)}</p>
+        <p class="mono">${esc(
+          passengers.length
+            ? passengers.map((p) => p.seat || "-").join(" · ")
+            : "-",
+        )}</p>
         ${
           flight.notes
             ? `<p class="micro">Notes</p><p class="note">${esc(flight.notes)}</p>`
@@ -202,23 +285,31 @@ function flightCard(flight: Flight, people: Person[]): string {
   `;
 }
 
-function render(data: FlightsPayload | null, message?: string) {
+function render(message?: string) {
   if (!root) return;
   if (message) {
     root.innerHTML = `<div class="notice">${esc(message)}</div>`;
     return;
   }
-  if (!data) {
+  if (!payload) {
     root.innerHTML = `<p class="status">Loading flights…</p>`;
     return;
   }
-  const flights = data.flights ?? [];
+  const flights = payload.flights ?? [];
   if (flights.length === 0) {
     root.innerHTML = `<div class="empty"><strong>No flights yet</strong>This trip doesn't have any flights saved in bunny.</div>`;
     return;
   }
-  const people = data.people ?? [];
-  root.innerHTML = `<div class="stack">${flights
+
+  let banner = "";
+  if (payload.can_write === false) {
+    banner = `<div class="banner">This connection is read-only. Reconnect with write access to change seats.</div>`;
+  } else if (payload.trip?.completed) {
+    banner = `<div class="banner">This trip is finished and locked, so seats can't be changed.</div>`;
+  }
+
+  const people = payload.people ?? [];
+  root.innerHTML = `${banner}<div class="stack">${flights
     .map((flight) => flightCard(flight, people))
     .join("")}</div>`;
 }
@@ -240,6 +331,150 @@ function payloadFrom(result: CallToolResult): FlightsPayload | null {
   return null;
 }
 
+function updatedFlightFrom(result: CallToolResult): Flight | null {
+  const structured = result.structuredContent as { flight?: Flight } | undefined;
+  if (structured?.flight) return structured.flight;
+  try {
+    const parsed = JSON.parse(textOf(result)) as { flight?: Flight };
+    return parsed.flight ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function flightInputs(flightId: string): HTMLInputElement[] {
+  if (!root) return [];
+  return Array.from(
+    root.querySelectorAll<HTMLInputElement>(
+      `.seat-input[data-flight="${CSS.escape(flightId)}"]`,
+    ),
+  );
+}
+
+function refreshFlightState(flightId: string) {
+  if (!root) return;
+  const inputs = flightInputs(flightId);
+  let valid = true;
+  for (const input of inputs) {
+    const ok = validSeat(input.value);
+    input.classList.toggle("invalid", !ok);
+    input.setAttribute("aria-invalid", ok ? "false" : "true");
+    if (!ok) valid = false;
+  }
+
+  const dirty = inputs.some(
+    (input) =>
+      (input.value || "") !== originalSeat(flightId, input.dataset.user ?? ""),
+  );
+
+  const save = root.querySelector<HTMLButtonElement>(
+    `button[data-action="save"][data-flight="${CSS.escape(flightId)}"]`,
+  );
+  if (save) save.disabled = !valid || !dirty || saving.has(flightId);
+
+  const state = root.querySelector<HTMLElement>(
+    `[data-state="${CSS.escape(flightId)}"]`,
+  );
+  if (state) {
+    if (saving.has(flightId)) state.textContent = "Saving…";
+    else if (!valid) state.textContent = "Check the seat format (e.g. 12A).";
+    else if (dirty) state.textContent = "Unsaved changes";
+    else if (savedAt.has(flightId)) state.textContent = "Seats saved";
+    else state.textContent = "";
+  }
+}
+
+function autoAssign(flightId: string) {
+  const inputs = flightInputs(flightId);
+  const used = new Set(
+    inputs
+      .map((input) => input.value.trim().toUpperCase())
+      .filter((seat) => seat !== ""),
+  );
+  const empty = inputs.filter((input) => input.value.trim() === "");
+
+  let row = 1;
+  let letter = 0;
+  for (const input of empty) {
+    let seat = "";
+    while (!seat) {
+      const candidate = `${row}${SEAT_LETTERS[letter]}`;
+      letter += 1;
+      if (letter >= SEAT_LETTERS.length) {
+        letter = 0;
+        row += 1;
+      }
+      if (!used.has(candidate)) {
+        used.add(candidate);
+        seat = candidate;
+      }
+    }
+    input.value = seat;
+    setDraft(flightId, input.dataset.user ?? "", seat);
+  }
+  refreshFlightState(flightId);
+}
+
+async function saveSeats(flightId: string) {
+  if (!payload || saving.has(flightId)) return;
+  const flight = payload.flights.find((item) => item.id === flightId);
+  if (!flight) return;
+
+  const inputs = flightInputs(flightId);
+  if (inputs.some((input) => !validSeat(input.value))) {
+    refreshFlightState(flightId);
+    return;
+  }
+
+  const seats = new Map(
+    inputs.map((input) => [
+      input.dataset.user ?? "",
+      input.value.trim().toUpperCase(),
+    ]),
+  );
+  const passengers = (flight.flight_passengers ?? []).map((passenger) => ({
+    user_id: passenger.user_id,
+    seat: seats.get(passenger.user_id) ?? passenger.seat ?? "",
+  }));
+
+  saving.add(flightId);
+  errors.delete(flightId);
+  savedAt.delete(flightId);
+  refreshFlightState(flightId);
+  for (const input of inputs) input.disabled = true;
+
+  try {
+    const result = await app.callServerTool({
+      name: "set_flight_seats",
+      arguments: { flight_id: flightId, passengers },
+    });
+    if (result.isError)
+      throw new Error(textOf(result) || "bunny couldn't save the seats.");
+
+    const updated = updatedFlightFrom(result);
+    if (!updated) throw new Error("bunny didn't return the updated flight.");
+
+    const index = payload.flights.findIndex((item) => item.id === flightId);
+    if (index >= 0) payload.flights[index] = updated;
+    drafts.delete(flightId);
+    savedAt.set(flightId, Date.now());
+  } catch (error) {
+    errors.set(
+      flightId,
+      error instanceof Error ? error.message : "Couldn't save the seats.",
+    );
+  } finally {
+    saving.delete(flightId);
+    render();
+    if (savedAt.has(flightId)) {
+      window.setTimeout(() => {
+        savedAt.delete(flightId);
+        if (payload) render();
+      }, 4000);
+    }
+  }
+}
+
 function applyHostContext(ctx: McpUiHostContext) {
   if (ctx.theme) applyDocumentTheme(ctx.theme);
   if (ctx.styles?.variables) applyHostStyleVariables(ctx.styles.variables);
@@ -252,23 +487,61 @@ function applyHostContext(ctx: McpUiHostContext) {
   }
 }
 
+root.addEventListener("input", (event) => {
+  const input = event.target;
+  if (!(input instanceof HTMLInputElement)) return;
+  if (!input.classList.contains("seat-input")) return;
+
+  const flightId = input.dataset.flight ?? "";
+  const userId = input.dataset.user ?? "";
+  const value = input.value.trim().toUpperCase().slice(0, 3);
+  if (input.value !== value) input.value = value;
+
+  setDraft(flightId, userId, value);
+  refreshFlightState(flightId);
+});
+
+root.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+  const input = event.target;
+  if (!(input instanceof HTMLInputElement)) return;
+  if (!input.classList.contains("seat-input")) return;
+  event.preventDefault();
+  void saveSeats(input.dataset.flight ?? "");
+});
+
+root.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+  const button = target.closest<HTMLButtonElement>("button[data-action]");
+  if (!button) return;
+
+  const flightId = button.dataset.flight ?? "";
+  if (button.dataset.action === "auto") autoAssign(flightId);
+  else if (button.dataset.action === "save") void saveSeats(flightId);
+});
+
 const app = new App({ name: "bunny flights", version: "1.0.0" }, {});
 
 app.ontoolinput = () => {
-  render(null);
+  render();
 };
 
 app.ontoolresult = (result) => {
   if (result.isError) {
-    render(null, textOf(result) || "bunny couldn't load the flights.");
+    render(textOf(result) || "bunny couldn't load the flights.");
     return;
   }
-  const payload = payloadFrom(result);
-  if (payload) {
-    render(payload);
-  } else {
-    render(null, "bunny couldn't read the flight details.");
+  const next = payloadFrom(result);
+  if (!next) {
+    render("bunny couldn't read the flight details.");
+    return;
   }
+  payload = next;
+  drafts.clear();
+  errors.clear();
+  savedAt.clear();
+  render();
 };
 
 app.onhostcontextchanged = (ctx) => {
@@ -276,7 +549,7 @@ app.onhostcontextchanged = (ctx) => {
 };
 
 app.onerror = (error) => {
-  render(null, error.message);
+  render(error.message);
 };
 
 app
@@ -288,5 +561,5 @@ app
   .catch((error: unknown) => {
     const message =
       error instanceof Error ? error.message : "Unknown connection error.";
-    render(null, `Couldn't connect to the host: ${message}`);
+    render(`Couldn't connect to the host: ${message}`);
   });

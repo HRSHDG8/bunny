@@ -65,7 +65,11 @@ interface ToolConfig<Schema extends z.ZodType> {
   /** Write tools need the trips:write scope. */
   write?: boolean;
   /** When set, the host renders this MCP App resource alongside the result. */
-  ui?: { resourceUri: string };
+  ui?: {
+    resourceUri: string;
+    /** App-only tools are callable by the UI but hidden from the model. */
+    visibility?: ("model" | "app")[];
+  };
 }
 
 /** Structured tool output must be an object, not an array or a primitive. */

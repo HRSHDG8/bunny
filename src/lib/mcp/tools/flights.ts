@@ -7,8 +7,20 @@ import {
   type FlightInput,
 } from "@/lib/services/flights";
 import { apiError } from "@/lib/supabase/errors";
-import { registerTool, dateTimeString, merged, uuid } from "@/lib/mcp/tools/shared";
-import { loadFlight, loadFlights, loadPeople } from "@/lib/mcp/tools/queries";
+import {
+  registerTool,
+  dateTimeString,
+  merged,
+  uuid,
+  WRITE_SCOPE,
+} from "@/lib/mcp/tools/shared";
+import {
+  loadFlight,
+  loadFlights,
+  loadPeople,
+  loadTrip,
+  tripSummary,
+} from "@/lib/mcp/tools/queries";
 import { FLIGHTS_APP_URI } from "@/lib/mcp/apps/flights";
 import type { Flight } from "@/lib/types";
 
@@ -135,11 +147,47 @@ export function registerFlightTools(server: McpServer) {
       ui: { resourceUri: FLIGHTS_APP_URI },
     },
     async ({ trip_id }, principal) => {
-      const [flights, people] = await Promise.all([
+      const [trip, flights, people] = await Promise.all([
+        loadTrip(principal.supabase, trip_id),
         loadFlights(principal.supabase, trip_id),
         loadPeople(principal.supabase, trip_id),
       ]);
-      return { trip_id, flights, people };
+      return {
+        trip_id,
+        can_write: principal.scopes.includes(WRITE_SCOPE),
+        trip: tripSummary(trip),
+        flights,
+        people,
+      };
+    },
+  );
+
+  registerTool(
+    server,
+    "set_flight_seats",
+    {
+      title: "Set flight seats",
+      description:
+        "Update the seat assignments on a flight. Called from the boarding-pass view; not meant for the model.",
+      inputSchema: z.object({
+        flight_id: z.string().describe("The id of the flight."),
+        passengers: z
+          .array(passenger)
+          .describe("Every passenger on the flight, with their seat."),
+      }),
+      write: true,
+      ui: { resourceUri: FLIGHTS_APP_URI, visibility: ["app"] },
+    },
+    async ({ flight_id, passengers }, principal) => {
+      const current = await loadFlight(principal.supabase, flight_id);
+      await updateFlight(
+        principal.supabase,
+        flight_id,
+        current.trip_id,
+        mergeFlightInput(current, { passengers }),
+      );
+      const flights = await loadFlights(principal.supabase, current.trip_id);
+      return { flight: flights.find((f) => f.id === flight_id) ?? null };
     },
   );
 
