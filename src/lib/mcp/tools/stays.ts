@@ -7,8 +7,19 @@ import {
   type StayInput,
 } from "@/lib/services/stays";
 import { apiError } from "@/lib/supabase/errors";
-import { registerTool, dateTimeString, merged } from "@/lib/mcp/tools/shared";
-import { loadStay, loadStays } from "@/lib/mcp/tools/queries";
+import {
+  registerTool,
+  dateTimeString,
+  merged,
+  WRITE_SCOPE,
+} from "@/lib/mcp/tools/shared";
+import {
+  loadStay,
+  loadStays,
+  loadTrip,
+  tripSummary,
+} from "@/lib/mcp/tools/queries";
+import { STAYS_APP_URI } from "@/lib/mcp/apps/stays";
 import type { Stay } from "@/lib/types";
 
 const stayFields = {
@@ -82,10 +93,19 @@ export function registerStayTools(server: McpServer) {
       inputSchema: z.object({
         trip_id: z.string().describe("The id of the trip."),
       }),
+      ui: { resourceUri: STAYS_APP_URI },
     },
     async ({ trip_id }, principal) => {
-      const stays = await loadStays(principal.supabase, trip_id);
-      return { trip_id, stays };
+      const [stays, trip] = await Promise.all([
+        loadStays(principal.supabase, trip_id),
+        loadTrip(principal.supabase, trip_id),
+      ]);
+      return {
+        trip_id,
+        can_write: principal.scopes.includes(WRITE_SCOPE),
+        trip: tripSummary(trip),
+        stays,
+      };
     },
   );
 

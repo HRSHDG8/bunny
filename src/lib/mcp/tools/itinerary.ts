@@ -8,8 +8,20 @@ import {
   type ItineraryInput,
 } from "@/lib/services/itinerary";
 import { apiError } from "@/lib/supabase/errors";
-import { registerTool, merged, timeString } from "@/lib/mcp/tools/shared";
-import { loadItinerary, loadItineraryItem } from "@/lib/mcp/tools/queries";
+import {
+  registerTool,
+  merged,
+  timeString,
+  WRITE_SCOPE,
+} from "@/lib/mcp/tools/shared";
+import {
+  loadItinerary,
+  loadItineraryItem,
+  loadStays,
+  loadTrip,
+  tripSummary,
+} from "@/lib/mcp/tools/queries";
+import { ITINERARY_APP_URI } from "@/lib/mcp/apps/itinerary";
 import type { ItineraryItem } from "@/lib/types";
 
 const itemFields = {
@@ -109,10 +121,21 @@ export function registerItineraryTools(server: McpServer) {
       inputSchema: z.object({
         trip_id: z.string().describe("The id of the trip."),
       }),
+      ui: { resourceUri: ITINERARY_APP_URI },
     },
     async ({ trip_id }, principal) => {
-      const itinerary = await loadItinerary(principal.supabase, trip_id);
-      return { trip_id, itinerary };
+      const [itinerary, stays, trip] = await Promise.all([
+        loadItinerary(principal.supabase, trip_id),
+        loadStays(principal.supabase, trip_id),
+        loadTrip(principal.supabase, trip_id),
+      ]);
+      return {
+        trip_id,
+        can_write: principal.scopes.includes(WRITE_SCOPE),
+        trip: tripSummary(trip),
+        itinerary,
+        stays,
+      };
     },
   );
 

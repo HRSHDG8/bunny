@@ -1,0 +1,59 @@
+@import "../../shared/base.css";
+
+.stay-head {
+  min-width: 0;
+  flex: 1;
+}
+
+.stay-place {
+  margin-top: 4px;
+}
+
+.stay-place .badge {
+  margin-left: 2px;
+}
+
+.stay-times {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--cream) 55%, transparent);
+}
+
+.time-block {
+  min-width: 0;
+  flex: 1;
+}
+
+.time-block-end {
+  text-align: right;
+}
+
+.time-main {
+  margin: 3px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.time-sea {
+  color: var(--sea);
+}
+
+.time-rust {
+  color: var(--rust);
+}
+
+.time-arrow {
+  flex-shrink: 0;
+  color: var(--line-strong);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.stay-address {
+  margin-top: 12px;
+}

@@ -7,6 +7,9 @@ import { registerItineraryTools } from "@/lib/mcp/tools/itinerary";
 import { registerLookupTools } from "@/lib/mcp/tools/lookup";
 import { registerPlanTools } from "@/lib/mcp/tools/plan";
 import { registerFlightsApp } from "@/lib/mcp/apps/flights";
+import { registerStaysApp } from "@/lib/mcp/apps/stays";
+import { registerRentalsApp } from "@/lib/mcp/apps/rentals";
+import { registerItineraryApp } from "@/lib/mcp/apps/itinerary";
 
 export const MCP_SERVER_NAME = "bunny";
 export const MCP_SERVER_VERSION = "1.0.0";
@@ -24,5 +27,8 @@ export function registerMcpTools(server: McpServer) {
   registerLookupTools(server);
   registerPlanTools(server);
   registerFlightsApp(server);
+  registerStaysApp(server);
+  registerRentalsApp(server);
+  registerItineraryApp(server);
   return server;
 }

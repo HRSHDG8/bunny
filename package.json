@@ -4,7 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build:mcp": "vite build --config mcp-apps/flights/vite.config.mts",
+    "build:mcp": "pnpm build:mcp:flights && pnpm build:mcp:stays && pnpm build:mcp:rentals && pnpm build:mcp:itinerary",
+    "build:mcp:flights": "vite build --config mcp-apps/flights/vite.config.mts",
+    "build:mcp:stays": "vite build --config mcp-apps/stays/vite.config.mts",
+    "build:mcp:rentals": "vite build --config mcp-apps/rentals/vite.config.mts",
+    "build:mcp:itinerary": "vite build --config mcp-apps/itinerary/vite.config.mts",
     "build:mcp:watch": "vite build --watch --config mcp-apps/flights/vite.config.mts",
     "build": "pnpm build:mcp && next build",
     "start": "next start",

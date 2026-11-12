@@ -1,0 +1,351 @@
+:root {
+  color-scheme: light;
+  --paper: #f9f4ea;
+  --cream: #f1e8d6;
+  --card: #fffdf7;
+  --ink: #21252e;
+  --ink-soft: #45484f;
+  --muted: #837c6e;
+  --line: #e7dcc5;
+  --line-strong: #d8c9a9;
+  --rust: #c3552a;
+  --rust-soft: #f4e2d8;
+  --amber: #bd861e;
+  --amber-soft: #f3e7c8;
+  --sea: #2f6f6a;
+  --sea-soft: #dce8e4;
+  --shadow-card: 0 1px 2px rgb(33 37 46 / 0.04),
+    0 12px 28px -14px rgb(33 37 46 / 0.14);
+  --font-sans: var(
+    --font-sans,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif
+  );
+  --font-mono: var(
+    --font-mono,
+    ui-monospace,
+    "SFMono-Regular",
+    Menlo,
+    monospace
+  );
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #15171b;
+  --cream: #1f2329;
+  --card: #1a1e24;
+  --ink: #eceff2;
+  --ink-soft: #a9b0b8;
+  --muted: #7e848d;
+  --line: #2a2f37;
+  --line-strong: #3b4149;
+  --rust: #d66a3e;
+  --rust-soft: #3a251d;
+  --amber: #d3a44b;
+  --amber-soft: #3a3321;
+  --sea: #54a49b;
+  --sea-soft: #1e302e;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 28px -14px rgb(0 0 0 / 0.6);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  padding: 12px;
+}
+
+#root {
+  display: block;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status,
+.notice,
+.empty {
+  margin: 0;
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.notice {
+  border-color: color-mix(in srgb, var(--rust) 40%, var(--line));
+  color: var(--rust);
+}
+
+.empty strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.micro {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.heading {
+  margin: 2px 0 0;
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.mono {
+  margin: 2px 0 0;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.note {
+  margin: 3px 0 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.icon-badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: var(--sea-soft);
+  color: var(--sea);
+}
+
+.icon-badge svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  margin-top: 8px;
+}
+
+.meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.meta svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.meta-sea {
+  color: var(--sea);
+}
+
+.meta-rust {
+  color: var(--rust);
+}
+
+.meta-amber {
+  color: var(--amber);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.badge-sea {
+  background: var(--sea-soft);
+  color: var(--sea);
+}
+
+.badge-amber {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.badge-rust {
+  background: var(--rust-soft);
+  color: var(--rust);
+}
+
+.badge-muted {
+  background: var(--cream);
+  color: var(--muted);
+}
+
+.banner {
+  margin-bottom: 10px;
+  padding: 9px 12px;
+  border: 1px solid color-mix(in srgb, var(--amber) 35%, var(--line));
+  border-radius: 10px;
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.note-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--cream) 55%, transparent);
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.note-box svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  fill: none;
+  stroke: var(--amber);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── Ticket shell (shared by the stay and rental cards) ──────────── */
+.ticket {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--line);
+}
+
+@media (min-width: 520px) {
+  .ticket {
+    flex-direction: row;
+  }
+}
+
+.ticket-main {
+  flex: 1;
+  min-width: 0;
+  padding: 18px;
+}
+
+.stub {
+  position: relative;
+  flex-shrink: 0;
+  padding: 16px 18px;
+  background: color-mix(in srgb, var(--cream) 55%, transparent);
+  border-top: 2px dashed var(--line-strong);
+}
+
+@media (min-width: 520px) {
+  .stub {
+    width: 156px;
+    border-top: 0;
+    border-left: 2px dashed var(--line-strong);
+  }
+}
+
+.stub .micro {
+  margin-top: 12px;
+}
+
+.stub .micro:first-child {
+  margin-top: 0;
+}
+
+.stub-time {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.stub-sea {
+  color: var(--sea);
+}
+
+.stub-rust {
+  color: var(--rust);
+}

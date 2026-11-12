@@ -18,8 +18,8 @@ like a stamped passport.
 - **Offline, read-only** — pages you've already visited stay available without
   a connection, and the app can be installed to your home screen
 - **MCP server** — let Claude plan trips in bunny, over OAuth 2.1, as you
-- **MCP Apps** — Claude renders `list_flights` as boarding-pass cards inside the
-  conversation, using the same look as the web app
+- **MCP Apps** — Claude renders flights, stays, car rentals and the itinerary as
+  themed cards inside the conversation, using the same look as the web app
 
 ## Stack
 
@@ -151,18 +151,25 @@ acting as you, with the same permissions the web app has.
 
 ### MCP Apps
 
-`list_flights` is also an [MCP App](https://modelcontextprotocol.io): hosts that
-support interactive UI (Claude Desktop / claude.ai) fetch
-`ui://bunny/flights.html` and render the trip's flights as boarding-pass cards
-with times, time zones, seats and booking references. Text-only clients keep
+The list tools are also [MCP Apps](https://modelcontextprotocol.io): hosts that
+support interactive UI (Claude Desktop / claude.ai) fetch a `ui://bunny/*.html`
+resource and render the result as a themed card view. Text-only clients keep
 getting the JSON fallback from the same tool.
 
-The UI lives in `mcp-apps/flights/` (vanilla TypeScript + the Apps SDK, bundled
-by Vite into one self-contained HTML file). Rebuild it after changing the UI:
+| Tool | Resource | What it renders |
+| --- | --- | --- |
+| `list_flights` | `ui://bunny/flights.html` | Boarding-pass cards with times, time zones, seats and booking references |
+| `list_stays` | `ui://bunny/stays.html` | Key-card style stays with check-in/out times, addresses and bookings |
+| `list_rentals` | `ui://bunny/rentals.html` | Car-rental cards with drivers, pickup/drop-off and the number plate |
+| `list_itinerary` | `ui://bunny/itinerary.html` | A day-by-day timeline with times, places, linked stays and notes |
+
+Each UI lives in `mcp-apps/<name>/` (vanilla TypeScript + the Apps SDK, bundled
+by Vite into one self-contained HTML file). Shared runtime and theme helpers
+are in `mcp-apps/shared/`. Rebuild after changing a UI:
 
 ```bash
-pnpm build:mcp        # writes public/mcp-apps/flights.html
-pnpm build:mcp:watch  # rebuild on change while developing
+pnpm build:mcp        # writes every widget into public/mcp-apps/
+pnpm build:mcp:watch  # rebuild the flights widget on change while developing
 ```
 
 `pnpm build` runs `build:mcp` before `next build`, so deploys always ship the

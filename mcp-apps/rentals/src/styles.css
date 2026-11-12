@@ -1,0 +1,77 @@
+@import "../../shared/base.css";
+
+.rental-head {
+  min-width: 0;
+  flex: 1;
+}
+
+.rental-times {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--cream) 55%, transparent);
+}
+
+.time-block {
+  min-width: 0;
+  flex: 1;
+}
+
+.time-block-end {
+  text-align: right;
+}
+
+.time-block .meta {
+  margin-top: 5px;
+}
+
+.time-block-end .meta {
+  justify-content: flex-end;
+}
+
+.time-main {
+  margin: 3px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.time-sea {
+  color: var(--sea);
+}
+
+.time-rust {
+  color: var(--rust);
+}
+
+.time-arrow {
+  flex-shrink: 0;
+  color: var(--line-strong);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.plate {
+  display: inline-block;
+  margin: 4px 0 0;
+  padding: 3px 8px;
+  border: 1px solid color-mix(in srgb, var(--amber) 45%, transparent);
+  border-radius: 8px;
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1.3;
+}
+
+.plate-empty {
+  border-color: var(--line-strong);
+  background: transparent;
+  color: color-mix(in srgb, var(--muted) 50%, transparent);
+  letter-spacing: 0.2em;
+}

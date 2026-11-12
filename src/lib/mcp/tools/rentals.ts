@@ -7,8 +7,21 @@ import {
   type RentalInput,
 } from "@/lib/services/rentals";
 import { apiError } from "@/lib/supabase/errors";
-import { registerTool, dateTimeString, merged, uuid } from "@/lib/mcp/tools/shared";
-import { loadRental, loadRentals } from "@/lib/mcp/tools/queries";
+import {
+  registerTool,
+  dateTimeString,
+  merged,
+  uuid,
+  WRITE_SCOPE,
+} from "@/lib/mcp/tools/shared";
+import {
+  loadPeople,
+  loadRental,
+  loadRentals,
+  loadTrip,
+  tripSummary,
+} from "@/lib/mcp/tools/queries";
+import { RENTALS_APP_URI } from "@/lib/mcp/apps/rentals";
 import type { Rental } from "@/lib/types";
 
 const rentalFields = {
@@ -92,10 +105,21 @@ export function registerRentalTools(server: McpServer) {
       inputSchema: z.object({
         trip_id: z.string().describe("The id of the trip."),
       }),
+      ui: { resourceUri: RENTALS_APP_URI },
     },
     async ({ trip_id }, principal) => {
-      const rentals = await loadRentals(principal.supabase, trip_id);
-      return { trip_id, rentals };
+      const [rentals, trip, people] = await Promise.all([
+        loadRentals(principal.supabase, trip_id),
+        loadTrip(principal.supabase, trip_id),
+        loadPeople(principal.supabase, trip_id),
+      ]);
+      return {
+        trip_id,
+        can_write: principal.scopes.includes(WRITE_SCOPE),
+        trip: tripSummary(trip),
+        rentals,
+        people,
+      };
     },
   );
 
