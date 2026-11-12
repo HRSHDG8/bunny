@@ -125,6 +125,35 @@ export function registerRentalTools(server: McpServer) {
 
   registerTool(
     server,
+    "set_rental_plate",
+    {
+      title: "Set the car plate",
+      description:
+        "Update the number plate on a rental car. Called from the rental view; not meant for the model.",
+      inputSchema: z.object({
+        rental_id: z.string().describe("The id of the rental."),
+        car_plate: z
+          .string()
+          .describe("Number plate, e.g. 'AB-123-CD'. Can be empty."),
+      }),
+      write: true,
+      ui: { resourceUri: RENTALS_APP_URI, visibility: ["app"] },
+    },
+    async ({ rental_id, car_plate }, principal) => {
+      const current = await loadRental(principal.supabase, rental_id);
+      await updateRental(
+        principal.supabase,
+        rental_id,
+        current.trip_id,
+        mergeRentalInput(current, { car_plate }),
+      );
+      const rentals = await loadRentals(principal.supabase, current.trip_id);
+      return { rental: rentals.find((r) => r.id === rental_id) ?? null };
+    },
+  );
+
+  registerTool(
+    server,
     "create_rental",
     {
       title: "Add a car rental",
